@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local config and credentials — never commit these.
+config.yaml
+.env
+
+# Generated reports may contain records about identifiable persons.
+*.report.json

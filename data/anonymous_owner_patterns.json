@@ -1,0 +1,40 @@
+{
+  "_about": "Patterns that identify an owner entry as anonymous or generic rather than a named party. Configurable: institutions whose records use other conventions should add their own patterns rather than editing rule code.",
+  "_axis": "persecution_context",
+  "_why": "An anonymous entry is unremarkable in most of a collection's history. Inside the persecution band it is the standard way an interrupted ownership history reads once a name has dropped out, so the rule is deliberately scoped to that band rather than flagging anonymity everywhere.",
+  "_matching": "Patterns are matched case- and accent-insensitively on word boundaries against `owner_name` and each of `owner_name_variants`. They are substrings, not whole-value equality: 'private collection, Switzerland' matches the pattern 'private collection'.",
+  "_band_note": "The band for this rule is 1933-01-01 to 1950-12-31, as specified in the project methodology notes. It is deliberately NARROWER than the persecution-onset table's risk band (which runs to 1955) and is not keyed to territory: anonymity is a property of the record, not of a place.",
+  "version": "2026-08-09",
+
+  "band": {
+    "from": "1933-01-01",
+    "to": "1950-12-31",
+    "source": "Project methodology notes, Heuristic Layer rule 7 ('specifically within the 1933-1950 range')."
+  },
+
+  "patterns": [
+    { "pattern": "private collection", "language": "en" },
+    { "pattern": "private collector", "language": "en" },
+    { "pattern": "private owner", "language": "en" },
+    { "pattern": "privatsammlung", "language": "de" },
+    { "pattern": "privatbesitz", "language": "de" },
+    { "pattern": "privatperson", "language": "de" },
+    { "pattern": "collection privee", "language": "fr" },
+    { "pattern": "collection particuliere", "language": "fr" },
+    { "pattern": "coll priv", "language": "fr/en", "note": "abbreviated form, e.g. 'Coll. priv.'" },
+    { "pattern": "collezione privata", "language": "it" },
+    { "pattern": "anonymous", "language": "en" },
+    { "pattern": "anonym", "language": "de" },
+    { "pattern": "anonimo", "language": "it" },
+    { "pattern": "unnamed", "language": "en" },
+    { "pattern": "unknown", "language": "en" },
+    { "pattern": "unbekannt", "language": "de" },
+    { "pattern": "inconnu", "language": "fr" },
+    { "pattern": "not recorded", "language": "en" },
+    { "pattern": "no owner recorded", "language": "en" },
+    { "pattern": "swiss private collection", "language": "en" },
+    { "pattern": "art market", "language": "en", "note": "generic trade entry naming no party" },
+    { "pattern": "kunsthandel", "language": "de", "note": "generic trade entry naming no party" },
+    { "pattern": "dealer", "language": "en", "note": "generic trade entry naming no party" }
+  ]
+}

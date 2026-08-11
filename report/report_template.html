@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provenance triage report</title>
+<style>
+:root {
+  --bg: #f6f6f4;
+  --surface: #ffffff;
+  --border: #d9d7d1;
+  --border-strong: #b3b0a8;
+  --ink: #1c1b19;
+  --ink-soft: #55524c;
+  --ink-faint: #7d7a72;
+  --accent: #2f4858;
+  --notice-bg: #f2efe6;
+  --notice-border: #c9bfa3;
+  --fill-a: #2f4858;
+  --fill-b: #7d8f99;
+  --fill-c: #d0cdc5;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181a;
+    --surface: #1f2124;
+    --border: #34373b;
+    --border-strong: #4c5055;
+    --ink: #e9e8e4;
+    --ink-soft: #b2b0ab;
+    --ink-faint: #85837e;
+    --accent: #9fb8c6;
+    --notice-bg: #26251f;
+    --notice-border: #5c5540;
+    --fill-a: #9fb8c6;
+    --fill-b: #5d7078;
+    --fill-c: #3a3d41;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 62rem; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+h1 { font-size: 1.65rem; margin: 0 0 .3rem; letter-spacing: -.01em; }
+h2 {
+  font-size: 1.15rem; margin: 0 0 .2rem; letter-spacing: -.005em;
+}
+h3 { font-size: .95rem; margin: 0 0 .4rem; }
+p { margin: 0 0 .8rem; }
+a { color: var(--accent); }
+.meta { color: var(--ink-faint); font-size: .8rem; margin-bottom: 1.5rem; }
+.meta span::after { content: " · "; }
+.meta span:last-child::after { content: ""; }
+
+section { margin-bottom: 2.75rem; }
+.section-head {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: .5rem;
+  margin-bottom: 1.25rem;
+}
+.section-head .step {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-faint); display: block; margin-bottom: .2rem;
+}
+.lede { color: var(--ink-soft); font-size: .9rem; max-width: 46rem; }
+
+.notice {
+  background: var(--notice-bg);
+  border: 1px solid var(--notice-border);
+  border-left-width: 4px;
+  padding: 1rem 1.1rem;
+  font-size: .875rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+.notice strong { display: block; margin-bottom: .35rem; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+.tile { background: var(--surface); border: 1px solid var(--border); padding: .85rem .9rem; }
+.tile .n { font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile .k { font-size: .78rem; color: var(--ink-soft); margin-top: .25rem; }
+
+.bar { display: flex; height: 2.1rem; border: 1px solid var(--border-strong); overflow: hidden; }
+.bar div { display: flex; align-items: center; justify-content: center; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.seg-a { background: var(--fill-a); color: var(--bg); }
+.seg-b { background: var(--fill-b); color: var(--bg); }
+.seg-c { background: var(--fill-c); color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .6rem; font-size: .8rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: .75rem; height: .75rem; margin-right: .35rem; vertical-align: -1px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1.25rem; }
+.controls input[type=search] {
+  flex: 1 1 14rem; padding: .5rem .65rem; font: inherit; font-size: .875rem;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border-strong);
+}
+.controls label { font-size: .82rem; color: var(--ink-soft); display: flex; align-items: center; gap: .35rem; }
+
+.band { margin-bottom: 2rem; }
+.band-head { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .15rem; }
+.band-head .mark { flex: none; }
+.band-head h3 { margin: 0; }
+.band-head .count { color: var(--ink-faint); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.band-desc { font-size: .82rem; color: var(--ink-faint); margin: 0 0 .7rem; max-width: 44rem; }
+
+/* Shape-coded, never colour-coded: a red/amber/green scheme would
+   reintroduce the severity grade the methodology forbids. */
+.mark { display: inline-block; width: .7rem; height: .7rem; border: 1.5px solid var(--ink); }
+.mark-heightened { background: var(--ink); }
+.mark-ordinary { background: transparent; }
+.mark-namelist { background: var(--ink); border-radius: 50%; }
+.mark-settlement { background: transparent; border-style: double; border-width: 4px; }
+.mark-coverage { background: transparent; border-style: dotted; }
+.mark-documentation { background: transparent; border-radius: 50%; }
+.mark-none { background: transparent; border-color: var(--border-strong); }
+
+.citations { margin-top: 1.1rem; border: 1px dashed var(--border-strong); padding: .7rem .8rem; }
+.citations > h4 {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--ink-faint); margin: 0 0 .4rem; font-weight: 600;
+}
+.citations .not-a-flag {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
+  border: 1px solid var(--border-strong); padding: .1rem .4rem;
+  display: inline-block; margin-bottom: .5rem;
+}
+.citation-note { font-size: .82rem; margin-bottom: .5rem; }
+.obj .cite-tag { font-size: .72rem; color: var(--ink-faint); flex: none; margin-left: .5rem; }
+.context-note {
+  background: var(--notice-bg); border: 1px solid var(--notice-border);
+  border-left-width: 4px; padding: .8rem .9rem; font-size: .82rem; margin-bottom: 1.5rem;
+}
+.context-note strong { display: block; margin-bottom: .3rem; }
+.skipped { font-size: .8rem; color: var(--ink-soft); }
+.skipped li { margin-bottom: .4rem; }
+
+.obj {
+  background: var(--surface); border: 1px solid var(--border);
+  margin-bottom: .6rem;
+}
+.obj > summary {
+  padding: .8rem .95rem; cursor: pointer; list-style: none;
+  display: flex; gap: .7rem; align-items: baseline;
+}
+.obj > summary::-webkit-details-marker { display: none; }
+.obj > summary::before {
+  content: "▸"; color: var(--ink-faint); font-size: .8rem; flex: none;
+}
+.obj[open] > summary::before { content: "▾"; }
+.obj .id { font-family: var(--mono); font-size: .8rem; color: var(--ink-soft); flex: none; }
+.obj .title { font-weight: 600; font-size: .92rem; }
+.obj .tally { margin-left: auto; font-size: .78rem; color: var(--ink-faint); flex: none; }
+.obj-body { padding: 0 .95rem 1rem; border-top: 1px solid var(--border); }
+
+.screening {
+  font-size: .84rem; color: var(--ink-soft); background: var(--bg);
+  border-left: 3px solid var(--border-strong); padding: .6rem .75rem; margin: .9rem 0;
+}
+.axis { margin-top: 1.1rem; }
+.axis > h4 {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--ink-faint); margin: 0 0 .5rem; font-weight: 600;
+}
+.flag { border: 1px solid var(--border); margin-bottom: .5rem; }
+.flag > summary { padding: .6rem .7rem; cursor: pointer; font-size: .86rem; list-style: none; }
+.flag > summary::-webkit-details-marker { display: none; }
+.flag .rid { font-family: var(--mono); font-size: .74rem; color: var(--ink-faint); margin-right: .45rem; }
+.tier {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .07em;
+  border: 1px solid var(--border-strong); padding: .05rem .35rem; margin-left: .35rem;
+  color: var(--ink-soft); white-space: nowrap;
+}
+.flag-body { padding: .1rem .7rem .7rem; font-size: .82rem; }
+.flag-body h5 {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-faint); margin: .8rem 0 .3rem; font-weight: 600;
+}
+table.cited { width: 100%; border-collapse: collapse; font-size: .78rem; }
+table.cited th, table.cited td {
+  text-align: left; vertical-align: top; padding: .3rem .5rem .3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+table.cited th { width: 12rem; font-weight: 500; color: var(--ink-soft); font-family: var(--mono); font-size: .72rem; }
+table.cited td { font-family: var(--mono); font-size: .74rem; word-break: break-word; }
+.nested-item { padding: .3rem 0; border-bottom: 1px dotted var(--border); }
+.nested-item:last-child { border-bottom: none; }
+.nested-line { margin-bottom: .15rem; }
+.nested-key { color: var(--ink-faint); }
+.methodology { color: var(--ink-soft); font-size: .78rem; line-height: 1.55; }
+.coverage { margin-top: 1.1rem; font-size: .78rem; color: var(--ink-faint); line-height: 1.6; }
+.empty { color: var(--ink-faint); font-size: .85rem; font-style: italic; }
+
+footer { border-top: 1px solid var(--border); padding-top: 1.5rem; font-size: .8rem; color: var(--ink-faint); }
+footer h3 { color: var(--ink-soft); }
+footer ul { padding-left: 1.1rem; margin: 0 0 1rem; }
+footer li { margin-bottom: .25rem; }
+@media print {
+  body { background: #fff; }
+  .controls { display: none; }
+  .obj-body, .flag-body { display: block !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Provenance triage report</h1>
+  <div class="meta" id="meta"></div>
+
+  <div class="notice" id="disclaimer"></div>
+
+  <div class="notice" id="ingest-block" hidden>
+    <strong>What the input conversion did not carry over</strong>
+    <span>Converting this file into the internal schema left the following unresolved. Each is a place where the source says something the screening could not use, so the criteria below ran against less than the record contains.</span>
+    <ul class="skipped" id="ingest-notes"></ul>
+  </div>
+
+  <section id="coverage-section">
+    <div class="section-head">
+      <span class="step">First</span>
+      <h2>Coverage map</h2>
+    </div>
+    <p class="lede">How much provenance documentation exists across the records supplied. These are counts of documentation, not of risk, and they describe the records rather than the objects.</p>
+    <div class="tiles" id="tiles"></div>
+    <h3>Pre-1945 documentation</h3>
+    <div class="bar" id="bar"></div>
+    <div class="legend" id="legend"></div>
+    <p class="coverage" id="coverage-note"></p>
+  </section>
+
+  <section id="queue-section">
+    <div class="section-head">
+      <span class="step">Second</span>
+      <h2>Work queue</h2>
+    </div>
+    <p class="lede">A suggested order for sequencing research, grouped by which criteria triggered. The groups describe <em>what the records say</em>, not how serious an object is: there is no score, no grade, and no ranking of objects within a group. Markers are shape-coded rather than colour-coded so that nothing reads as a traffic light.</p>
+    <div class="controls">
+      <input type="search" id="search" placeholder="Filter by object ID or title" aria-label="Filter by object ID or title">
+      <label><input type="checkbox" id="show-resolved"> show previously resolved</label>
+    </div>
+    <div id="queue"></div>
+  </section>
+
+  <footer>
+    <h3>Criteria screened</h3>
+    <ul id="criteria"></ul>
+    <div id="not-run-block" hidden>
+      <h3>Criteria that could not run</h3>
+      <ul class="skipped" id="not-run"></ul>
+    </div>
+    <h3>Date precision</h3>
+    <p id="precision-note"></p>
+    <h3>Acquisition commitment date</h3>
+    <p id="commitment-note"></p>
+    <h3>Persecution-onset table</h3>
+    <p id="table-note"></p>
+    <h3>Plain-language restatements</h3>
+    <p id="llm-note"></p>
+    <div id="reference-lists-block" hidden>
+      <h3>Reference lists</h3>
+      <ul class="skipped" id="reference-lists"></ul>
+    </div>
+  </footer>
+</div>
+
+<script id="triage-data" type="application/json">__TRIAGE_DATA__</script>
+<script>
+(function () {
+  "use strict";
+  var DATA = JSON.parse(document.getElementById("triage-data").textContent);
+
+  // Display-only grouping. Deliberately not written back into the JSON
+  // output: a stored per-object band would be the graded record the
+  // methodology says not to create.
+  var BANDS = [
+    { id: "heightened", label: "Heightened presumption tier engaged",
+      desc: "A transfer overlaps a persecution window at the heightened tier. The record does not establish that the transferor was persecuted, nor what was received." },
+    { id: "ordinary", label: "Ordinary presumption tier engaged",
+      desc: "A transfer overlaps a persecution window at the ordinary tier." },
+    { id: "namelist", label: "Reference-list match recorded",
+      desc: "A party matches a bundled reference list. A match is a citation to that record and carries no finding about this transaction or about any person. Read the cited basis before acting on it." },
+    { id: "settlement", label: "Settlement recorded to a state",
+      desc: "A restitution or settlement is recorded as made to a state or institution rather than to named individuals or heirs. Whether the dispossessed family ever received anything is a separate question the record does not answer. These objects are marked previously resolved but are shown here rather than held out, because that is the question this criterion exists to ask." },
+    { id: "coverage", label: "Coverage gaps",
+      desc: "No pre-1945 provenance recorded, the chain begins at the institution's own accession, an object class that moved through chainless channels, or an owner named pre-1933 who is absent later. Nothing is known about the relevant period either way." },
+    { id: "documentation", label: "Documentation-quality observations only",
+      desc: "A records-completeness matter, including acquisition practice measured against the institution's own commitment date. This says nothing about persecution context." },
+    { id: "none", label: "No criteria triggered",
+      desc: "Screened, not cleared. Listed so the queue accounts for every object supplied." }
+  ];
+
+  var NAME_LIST_RULES = { "NM-001": true, "PC-005": true };
+  var SETTLEMENT_RULES = { "PC-008": true };
+
+  function bandOf(obj) {
+    var pc = obj.persecution_context_flags || [];
+    var dq = obj.documentation_quality_flags || [];
+    if (pc.some(function (f) { return f.presumption_tier === "heightened"; })) return "heightened";
+    if (pc.some(function (f) { return f.presumption_tier === "ordinary"; })) return "ordinary";
+    if (pc.some(function (f) { return NAME_LIST_RULES[f.rule_id]; })) return "namelist";
+    if (pc.some(function (f) { return SETTLEMENT_RULES[f.rule_id]; })) return "settlement";
+    if (pc.length) return "coverage";
+    if (dq.length) return "documentation";
+    return "none";
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+
+  // ---- header -----------------------------------------------------------
+  var meta = document.getElementById("meta");
+  [["Input", DATA.input_file], ["Format", DATA.input_format],
+   ["Generated", DATA.generated_at],
+   ["Onset table", DATA.onset_table_version],
+   ["Explanations", (DATA.llm_layer || {}).enabled
+      ? "machine-generated (" + (DATA.llm_layer.output_language || "?") + ")"
+      : "none generated"]].forEach(function (pair) {
+    if (pair[1]) meta.appendChild(el("span", null, pair[0] + ": " + pair[1]));
+  });
+
+  var disc = document.getElementById("disclaimer");
+  disc.appendChild(el("strong", null, "This is machine-generated triage, not provenance research."));
+  disc.appendChild(el("span", null, DATA.disclaimer));
+
+  // A lossy conversion governs how the whole report reads, so it is stated
+  // above the coverage map rather than left in the JSON for nobody to find.
+  var ingest = DATA.ingest_notes || [];
+  if (ingest.length) {
+    document.getElementById("ingest-block").hidden = false;
+    var il = document.getElementById("ingest-notes");
+    ingest.forEach(function (note) {
+      var li = el("li");
+      li.appendChild(el("span", "rid", note.source_ref + " "));
+      li.appendChild(document.createTextNode(note.detail));
+      il.appendChild(li);
+    });
+  }
+
+  // ---- coverage map -----------------------------------------------------
+  var cm = DATA.coverage_map;
+  var tiles = document.getElementById("tiles");
+  [["objects_processed", "objects processed"],
+   ["with_no_pre_1945_provenance", "with no pre-1945 provenance"],
+   ["chain_begins_at_institutional_acquisition", "chains beginning at accession"],
+   ["institutional_acquisition_not_determinable", "accession not identifiable in the record"],
+   ["previously_resolved", "previously resolved"]].forEach(function (pair) {
+    var t = el("div", "tile");
+    t.appendChild(el("div", "n", cm[pair[0]]));
+    t.appendChild(el("div", "k", pair[1]));
+    tiles.appendChild(t);
+  });
+
+  var total = cm.objects_processed || 1;
+  var certain = cm.of_which_certainly_dated_pre_1945;
+  var imprecise = cm.with_any_pre_1945_provenance - certain;
+  var none = cm.with_no_pre_1945_provenance;
+  var bar = document.getElementById("bar");
+  [["seg-a", certain, "certainly dated before 1945"],
+   ["seg-b", imprecise, "pre-1945 only via imprecise dates"],
+   ["seg-c", none, "no pre-1945 provenance"]].forEach(function (seg) {
+    if (!seg[1]) return;
+    var d = el("div", seg[0], seg[1]);
+    d.style.width = (seg[1] / total * 100) + "%";
+    d.title = seg[2] + ": " + seg[1];
+    bar.appendChild(d);
+  });
+  var legend = document.getElementById("legend");
+  [["--fill-a", certain, "certainly dated before 1945"],
+   ["--fill-b", imprecise, "pre-1945 only via imprecise dates (circa / before / after)"],
+   ["--fill-c", none, "no pre-1945 provenance recorded"]].forEach(function (item) {
+    var s = el("span");
+    var sw = el("i");
+    sw.style.background = "var(" + item[0] + ")";
+    s.appendChild(sw);
+    s.appendChild(document.createTextNode(item[1] + " " + item[2]));
+    legend.appendChild(s);
+  });
+  document.getElementById("coverage-note").textContent = cm.note || "";
+
+  // ---- per-object rendering --------------------------------------------
+  // A documented basis is the whole point of a reference-list match, so it is
+  // rendered as readable structure rather than a JSON blob.
+  function renderNested(value) {
+    var wrap = el("div", "nested");
+    value.forEach(function (item) {
+      var block = el("div", "nested-item");
+      Object.keys(item).forEach(function (key) {
+        var line = el("div", "nested-line");
+        line.appendChild(el("span", "nested-key", key.replace(/_/g, " ") + ": "));
+        var inner = item[key];
+        line.appendChild(document.createTextNode(
+          Array.isArray(inner) ? inner.join("; ") : String(inner)
+        ));
+        block.appendChild(line);
+      });
+      wrap.appendChild(block);
+    });
+    return wrap;
+  }
+
+  function renderCited(cited) {
+    var table = el("table", "cited");
+    Object.keys(cited).forEach(function (key) {
+      var value = cited[key];
+      var tr = el("tr");
+      tr.appendChild(el("th", null, key));
+      var td = el("td");
+      if (value === null || value === undefined || value === "") {
+        td.textContent = "—";
+      } else if (Array.isArray(value) && value.length && typeof value[0] === "object") {
+        td.appendChild(renderNested(value));
+      } else if (Array.isArray(value)) {
+        td.textContent = value.length ? value.join("; ") : "—";
+      } else if (typeof value === "object") {
+        td.appendChild(renderNested([value]));
+      } else {
+        td.textContent = String(value);
+      }
+      tr.appendChild(td);
+      table.appendChild(tr);
+    });
+    return table;
+  }
+
+  function renderFlag(flag) {
+    var d = el("details", "flag");
+    var s = el("summary");
+    s.appendChild(el("span", "rid", flag.rule_id));
+    s.appendChild(document.createTextNode(flag.rule_statement || ""));
+    if (flag.presumption_tier) {
+      s.appendChild(el("span", "tier", "REAO tier: " + flag.presumption_tier));
+    }
+    d.appendChild(s);
+
+    var body = el("div", "flag-body");
+    body.appendChild(el("h5", null, "Cited record fields"));
+    body.appendChild(renderCited(flag.cited_fields || {}));
+    body.appendChild(el("h5", null, "Methodological basis"));
+    body.appendChild(el("p", "methodology", flag.methodology || ""));
+    // Rendered directly under the cited fields so a reader can check every
+    // generated sentence against the record without scrolling.
+    if (flag.llm_explanation) {
+      body.appendChild(el("h5", null, "Plain-language restatement"));
+      body.appendChild(el("p", "methodology", flag.llm_explanation));
+      body.appendChild(el("div", "not-a-flag",
+        "machine-generated · verified against the fields above"));
+    } else if (flag.llm_explanation_status &&
+               flag.llm_explanation_status.indexOf("generated_and_verified") !== 0) {
+      // A withheld explanation is reported, never silently absent.
+      body.appendChild(el("h5", null, "Plain-language restatement"));
+      body.appendChild(el("p", "methodology",
+        "None. " + flag.llm_explanation_status +
+        " The rule statement above is the tool's own wording and is unaffected."));
+    }
+    d.appendChild(body);
+    return d;
+  }
+
+  function renderAxis(title, flags, emptyText) {
+    var wrap = el("div", "axis");
+    wrap.appendChild(el("h4", null, title));
+    if (!flags.length) {
+      wrap.appendChild(el("p", "empty", emptyText));
+      return wrap;
+    }
+    flags.forEach(function (f) { wrap.appendChild(renderFlag(f)); });
+    return wrap;
+  }
+
+  // Exonerating name-list matches. Rendered on their own dashed panel, never
+  // as a flag: an exonerating entry records that a name was investigated and
+  // cleared, or that the person acted protectively, and showing it as a
+  // concern would invert the record's meaning.
+  function renderCitations(citations) {
+    var wrap = el("div", "citations");
+    wrap.appendChild(el("h4", null, "Name-list citations — context, not findings"));
+    wrap.appendChild(el("div", "not-a-flag", "Not a flag · does not place this object in the queue"));
+    citations.forEach(function (c) {
+      wrap.appendChild(el("p", "citation-note", c.rule_statement));
+      wrap.appendChild(renderCited(c.cited_fields || {}));
+      wrap.appendChild(el("p", "methodology", c.methodology || ""));
+    });
+    return wrap;
+  }
+
+  function renderObject(obj) {
+    var pc = obj.persecution_context_flags || [];
+    var dq = obj.documentation_quality_flags || [];
+    var citations = obj.name_list_citations || [];
+    var d = el("details", "obj");
+
+    var s = el("summary");
+    s.appendChild(el("span", "id", obj.object_id));
+    s.appendChild(el("span", "title", obj.object_title || "(untitled)"));
+    var tally = pc.length + " persecution-context · " + dq.length + " documentation";
+    s.appendChild(el("span", "tally", tally));
+    if (citations.length) {
+      s.appendChild(el("span", "cite-tag",
+        "+ " + citations.length + " exonerating citation" + (citations.length === 1 ? "" : "s")));
+    }
+    d.appendChild(s);
+
+    var body = el("div", "obj-body");
+    body.appendChild(el("p", "screening", obj.screening_statement));
+    body.appendChild(renderAxis("Persecution context", pc,
+      "No persecution-context criterion triggered. This is not a clearance."));
+    body.appendChild(renderAxis("Documentation quality", dq,
+      "No documentation-quality criterion triggered."));
+    if (citations.length) body.appendChild(renderCitations(citations));
+    if (obj.coverage_note) {
+      var cov = el("div", "coverage");
+      cov.appendChild(el("strong", null, "Which criteria ran: "));
+      cov.appendChild(document.createTextNode(obj.coverage_note));
+      body.appendChild(cov);
+    }
+    d.appendChild(body);
+    return d;
+  }
+
+  // ---- queue ------------------------------------------------------------
+  var objects = DATA.objects || [];
+  var queue = document.getElementById("queue");
+  var search = document.getElementById("search");
+  var showResolved = document.getElementById("show-resolved");
+
+  function draw() {
+    var term = search.value.trim().toLowerCase();
+    queue.textContent = "";
+
+    var visible = objects.filter(function (o) {
+      if (!term) return true;
+      return (o.object_id + " " + (o.object_title || "")).toLowerCase().indexOf(term) !== -1;
+    });
+    // A previously-resolved object is normally held out of the queue. The one
+    // exception is PC-008: that rule exists precisely to ask whether a
+    // recorded settlement reached the dispossessed family, so holding it out
+    // on the strength of the settlement it questions would make the rule
+    // unreachable. The stored resolved_status is unchanged either way.
+    function heldOut(o) {
+      if (o.resolved_status !== "previously_resolved") return false;
+      return !(o.persecution_context_flags || []).some(function (f) {
+        return SETTLEMENT_RULES[f.rule_id];
+      });
+    }
+    var active = visible.filter(function (o) { return !heldOut(o); });
+    var held = visible.filter(heldOut);
+
+    BANDS.forEach(function (band) {
+      var members = active.filter(function (o) { return bandOf(o) === band.id; });
+      if (!members.length) return;
+      var wrap = el("div", "band");
+      var head = el("div", "band-head");
+      head.appendChild(el("span", "mark mark-" + band.id));
+      head.appendChild(el("h3", null, band.label));
+      head.appendChild(el("span", "count", members.length + " object" + (members.length === 1 ? "" : "s")));
+      wrap.appendChild(head);
+      wrap.appendChild(el("p", "band-desc", band.desc));
+      members.forEach(function (o) { wrap.appendChild(renderObject(o)); });
+      queue.appendChild(wrap);
+    });
+
+    if (held.length) {
+      var hw = el("div", "band");
+      var hh = el("div", "band-head");
+      hh.appendChild(el("h3", null, "Previously resolved — held out of the queue"));
+      hh.appendChild(el("span", "count", held.length + " object" + (held.length === 1 ? "" : "s")));
+      hw.appendChild(hh);
+      hw.appendChild(el("p", "band-desc",
+        "The chain records a restitution or settlement. These are kept out of the active queue so that a closed matter is not reopened as an open one. Re-flagging a settled claim is a real cost, not a harmless false positive."));
+      if (showResolved.checked) {
+        held.forEach(function (o) { hw.appendChild(renderObject(o)); });
+      }
+      queue.appendChild(hw);
+    }
+
+    if (!visible.length) {
+      queue.appendChild(el("p", "empty", "No object matches that filter."));
+    }
+  }
+
+  search.addEventListener("input", draw);
+  showResolved.addEventListener("change", draw);
+  draw();
+
+  // ---- footer -----------------------------------------------------------
+  var crit = document.getElementById("criteria");
+  (DATA.criteria_screened || []).forEach(function (c) {
+    var li = el("li");
+    li.appendChild(el("span", "rid", c.rule_id + " "));
+    li.appendChild(document.createTextNode(c.title + " — " + c.axis.replace(/_/g, " ") + " axis"));
+    crit.appendChild(li);
+  });
+  var notRun = DATA.criteria_not_run || [];
+  if (notRun.length) {
+    document.getElementById("not-run-block").hidden = false;
+    var nr = document.getElementById("not-run");
+    notRun.forEach(function (item) {
+      var li = el("li");
+      li.appendChild(el("span", "rid", item.rule_id + " "));
+      li.appendChild(document.createTextNode(item.reason));
+      nr.appendChild(li);
+    });
+  }
+
+  var dp = DATA.date_precision_handling || {};
+  document.getElementById("precision-note").textContent =
+    "circa margin: ±" + dp.circa_margin_years + " years. " + (dp.note || "");
+
+  var cd = DATA.commitment_date || {};
+  document.getElementById("commitment-note").textContent =
+    cd.applied
+      ? (cd.applied + (cd.is_default ? " (default — the institution has not set its own)" : " (configured)") + ". " + (cd.source || ""))
+      : "not applied";
+
+  document.getElementById("table-note").textContent =
+    "Version " + DATA.onset_table_version + ". " + (DATA.onset_table_review_status || "");
+
+  // Whether any sentence in this report was machine-generated has to be
+  // answerable at a glance, not inferred from the absence of a paragraph.
+  var llm = DATA.llm_layer || {};
+  document.getElementById("llm-note").textContent = llm.enabled
+    ? ("Generated in " + llm.output_language + ". " + (llm.constraint || "") + " "
+       + (llm.data_protection || ""))
+    : (llm.note || "The explanation layer did not run.");
+
+  var lists = DATA.reference_lists || {};
+  var listNames = Object.keys(lists);
+  if (listNames.length) {
+    document.getElementById("reference-lists-block").hidden = false;
+    var rl = document.getElementById("reference-lists");
+    listNames.forEach(function (name) {
+      var info = lists[name];
+      var li = el("li");
+      li.appendChild(el("strong", null, name.replace(/_/g, " ") + ": "));
+      var bits = [];
+      if (info.entries !== undefined) bits.push(info.entries + " entries");
+      if (info.exonerating_entries !== undefined) bits.push(info.exonerating_entries + " exonerating");
+      if (info.patterns !== undefined) bits.push(info.patterns + " patterns");
+      if (info.band) bits.push("band " + info.band);
+      if (info.version) bits.push("version " + info.version);
+      if (info.loaded_from) bits.push(info.loaded_from);
+      li.appendChild(document.createTextNode(bits.join(" · ")));
+      rl.appendChild(li);
+    });
+
+    // Each list's own scholarly-context note, and its own declaration that it
+    // is incomplete, have to reach a reader — they govern how both a match and
+    // a non-match may be read, and cannot sit unread in the JSON.
+    var queueSection = document.getElementById("queue-section");
+    var anchor = document.getElementById("queue");
+    [["aliu_red_flag_names", "Reading the ALIU Red Flag Names List", "critical_scholarly_context"],
+     ["confiscation_channel_actors", "Reading the confiscation-channel actor list", "critical_context"]
+    ].forEach(function (spec) {
+      var info = lists[spec[0]];
+      if (!info) return;
+      var body = [info[spec[2]], info.non_match_caveat].filter(Boolean).join(" ");
+      if (!body) return;
+      var note = el("div", "context-note");
+      var heading = spec[1];
+      if (info.list_status) heading += " — " + info.list_status;
+      note.appendChild(el("strong", null, heading));
+      note.appendChild(el("span", null, body));
+      queueSection.insertBefore(note, anchor);
+    });
+  }
+})();
+</script>
+</body>
+</html>

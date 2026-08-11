@@ -1,0 +1,25 @@
+{
+  "_about": "SYNTHETIC TEST FIXTURE — not the ALIU Red Flag Names List and not for production use. Every name here is invented. Its purpose is to exercise the structural mechanics of name matching, in particular that an exonerating entry cannot be rendered, counted or filtered as a concern. Tests that must run against the real bundled list are marked to skip when that list is absent.",
+  "_meta": {
+    "fixture": true,
+    "critical_scholarly_context": "Invented placeholder standing in for the real list's scholarly-context note. It exists so the surfacing mechanism can be tested; it carries no content about any real list or person."
+  },
+  "entries": [
+    {
+      "entry_id": "FIX-1",
+      "name": "Muster, Heinrich",
+      "entry_type": "documented_concern",
+      "annotation": "Invented annotation: stands for an entry recorded in the investigative record as a documented concern.",
+      "source_url": "https://example.invalid/fixture/1",
+      "match_terms": ["muster, heinrich", "heinrich muster", "muster"]
+    },
+    {
+      "entry_id": "FIX-2",
+      "name": "Vogel, Franz",
+      "entry_type": "exonerating",
+      "annotation": "Invented annotation: stands for an entry recorded in terms that clear the named person, or that record protective conduct. Rendering this as a concern would invert its meaning.",
+      "source_url": "https://example.invalid/fixture/2",
+      "match_terms": ["vogel, franz", "franz vogel"]
+    }
+  ]
+}

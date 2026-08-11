@@ -1,0 +1,77 @@
+{
+  "_about": "LIDO Event Type -> internal transaction_state. Configurable so an institution can add its own local vocabulary terms without touching code.",
+  "_why_most_terms_are_not_mapped": "LIDO has no native term for a forced sale or a confiscation, and the REAO taxonomy this tool screens against is not a vocabulary LIDO carries. Only terms whose REAO equivalent is unambiguous are mapped here. Everything else is left for the record to state explicitly via PROVENA_EXT:transaction_state, and the adapter emits an ingest note naming the term it did not map, so the omission is visible rather than silent. An unmapped event is still screened: it enters as `unknown`, which the persecution-window rule treats as a transfer of unrecorded character rather than skipping it.",
+  "_direction_of_error": "Under-mapping is the safe direction and over-mapping is not. `unknown` still gets screened; a wrong `restitution_erfolgt_or_vergleich` would hold an object OUT of the active queue on the strength of a term that may not mean a settled claim. That asymmetry decides every borderline case below.",
+  "version": "2026-08-11",
+  "review_status": "Transcribed from the LIDO Event Type vocabulary (terminology.lido-schema.org) and the REAO taxonomy in src/reao_taxonomy.py. Not reviewed by a provenance researcher. The Restitution mapping is the one with queue-suppressing consequences and is the first thing a reviewer should check.",
+  "source": "LIDO Terminology Event Type vocabulary, http://terminology.lido-schema.org/eventType (re-verify with scripts/fetch_lido_event_types.py).",
+  "mapped": [
+    {
+      "lido_id": "lido01016",
+      "term": "Purchase",
+      "transaction_state": "purchase",
+      "basis": "Direct equivalent; `purchase` in the REAO taxonomy is the same neutral transfer type."
+    },
+    {
+      "lido_id": "lido00996",
+      "term": "Gift",
+      "transaction_state": "gift",
+      "basis": "Direct equivalent."
+    },
+    {
+      "lido_id": "lido01015",
+      "term": "Exchange",
+      "transaction_state": "exchange",
+      "basis": "Direct equivalent."
+    },
+    {
+      "lido_id": "lido00724",
+      "term": "Restitution",
+      "transaction_state": "restitution_erfolgt_or_vergleich",
+      "basis": "Direct equivalent: a restitution event records a claim already resolved. NOTE this mapping holds the object out of the ACTIVE triage queue (see resolved_status). It is the only mapping here with that effect. Supply PROVENA_EXT:restitution_recipient_type on the same event or rule PC-008 (restitution to a state rather than to named heirs) reports itself skipped."
+    },
+    {
+      "lido_id": "lido01130",
+      "term": "Unknown provenance event",
+      "transaction_state": "unknown",
+      "basis": "Direct equivalent; the term states that the character of the transfer is not recorded."
+    }
+  ],
+  "deliberately_unmapped": [
+    {
+      "lido_id": "lido00001",
+      "term": "Change of legal title",
+      "reason": "This is the generic carrier this project maps the REAO states ONTO, not a state in itself. A record using it must say which REAO state applies; deriving one from the surrounding text is the free-text keyword inference the methodology rejects."
+    },
+    {
+      "lido_id": "lido01134",
+      "term": "Transfer of ownership",
+      "reason": "As above: generic, states nothing about the character of the transfer."
+    },
+    {
+      "lido_id": "lido01011",
+      "term": "Looting",
+      "reason": "Not mapped to `entziehung`, which in REAO Art. 3 means a seizure by STATE act. LIDO's term does not distinguish a state seizure from a private theft, so the mapping would assert a state act the record does not establish."
+    },
+    {
+      "lido_id": "lido01010",
+      "term": "Theft",
+      "reason": "Same reasoning as Looting, and further from a state act."
+    },
+    {
+      "lido_id": "lido00009",
+      "term": "Loss",
+      "reason": "States that the object was lost, not how title moved."
+    },
+    {
+      "lido_id": "lido01128",
+      "term": "Loan",
+      "reason": "A loan does not transfer title at all."
+    },
+    {
+      "lido_id": "lido01153",
+      "term": "Repatriation",
+      "reason": "NOT mapped to restitution_erfolgt_or_vergleich, even though it is adjacent. Repatriation commonly names a state-to-state return, frequently in a colonial context this tool explicitly does not cover, and the mapping would suppress the object from the active queue on a term that may not mean a settled Nazi-era claim. Say so explicitly with PROVENA_EXT:transaction_state if that is what the record means."
+    }
+  ]
+}

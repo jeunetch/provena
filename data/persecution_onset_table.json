@@ -1,0 +1,232 @@
+{
+  "_about": "Persecution-onset table. Configurable and extensible: institutions whose collections touch territories or dates not covered here should add entries rather than relying on this default. Every entry must carry a source. Dates are transcribed from the table in the project methodology notes; where that table gives a month or a month range rather than a day, onset_earliest/onset_latest express that imprecision instead of inventing a day.",
+  "_axis": "persecution_context",
+  "_structure": "Each territory carries one or more `windows`. A window runs from its onset to `ends` (defaulting to risk_band_end). `presumption_tier` is normally `by_nuremberg_threshold`, meaning the tier is derived from the transfer's position relative to heightened_presumption_from. A window may instead set an explicit `ordinary` or `heightened` tier where the territory's own chronology, not the Nuremberg threshold, governs — see Italy.",
+  "_review_status": "NOT reviewed by an admitted lawyer or a professional provenance researcher. The territory list and onset dates are transcribed from the project methodology notes; the Italy two-window model is a modeling decision made during implementation and needs expert confirmation.",
+  "version": "2026-08-09b",
+
+  "risk_band_end": {
+    "date": "1955-12-31",
+    "rationale": "The risk band is deliberately extended past 1945. Post-war Collecting Point restitutions, internal-restitution failures in France and the Netherlands, and the 1948-1954 dispersal of 'heirless property' form a distinct and heavily contested band that a 1945 cut-off misses entirely.",
+    "source": "Project methodology notes, Heuristic Layer; Terezin Declaration (2009) on heirless property."
+  },
+
+  "heightened_presumption_from": {
+    "date": "1935-09-15",
+    "label": "Nuremberg Laws",
+    "rationale": "Under REAO Art. 3 this is the threshold at which the presumption of a persecution-related loss becomes the heightened presumption (verschaerfte Vermutung), rebuttable only on proof of fair value, free disposal of the proceeds, and that the transfer would have occurred absent persecution.",
+    "source": "Rueckerstattungsanordnung (REAO) Art. 3; German/Austrian restitution practice."
+  },
+
+  "match_note": "match_terms are matched case- and accent-insensitively on word boundaries against the record's `location` field. They are name variants of the same territory (English/German/local forms), not additional territories. Adding a territory means adding an entry with its own cited onset date.",
+
+  "territories": [
+    {
+      "id": "germany_altreich",
+      "territory": "Germany (Altreich)",
+      "match_terms": ["germany", "deutschland", "altreich"],
+      "windows": [
+        {
+          "id": "germany_altreich_1933",
+          "onset_earliest": "1933-01-30",
+          "onset_latest": "1933-01-30",
+          "onset_label": "30 January 1933",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table."
+        }
+      ]
+    },
+    {
+      "id": "austria",
+      "territory": "Austria",
+      "match_terms": ["austria", "osterreich", "oesterreich"],
+      "windows": [
+        {
+          "id": "austria_1938",
+          "onset_earliest": "1938-03-13",
+          "onset_latest": "1938-03-13",
+          "onset_label": "13 March 1938",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table."
+        }
+      ]
+    },
+    {
+      "id": "sudetenland",
+      "territory": "Sudetenland",
+      "match_terms": ["sudetenland", "sudeten"],
+      "windows": [
+        {
+          "id": "sudetenland_1938",
+          "onset_earliest": "1938-10-01",
+          "onset_latest": "1938-10-31",
+          "onset_label": "October 1938",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table. Month-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "bohemia_moravia",
+      "territory": "Bohemia & Moravia",
+      "match_terms": ["bohemia", "moravia", "bohmen", "boehmen", "mahren", "maehren"],
+      "windows": [
+        {
+          "id": "bohemia_moravia_1939",
+          "onset_earliest": "1939-03-15",
+          "onset_latest": "1939-03-15",
+          "onset_label": "15 March 1939",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table."
+        }
+      ]
+    },
+    {
+      "id": "poland",
+      "territory": "Poland",
+      "match_terms": ["poland", "polen", "polska"],
+      "windows": [
+        {
+          "id": "poland_1939",
+          "onset_earliest": "1939-09-01",
+          "onset_latest": "1939-09-01",
+          "onset_label": "1 September 1939",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table."
+        }
+      ]
+    },
+    {
+      "id": "netherlands",
+      "territory": "Netherlands",
+      "match_terms": ["netherlands", "nederland", "niederlande", "holland"],
+      "windows": [
+        {
+          "id": "netherlands_1940",
+          "onset_earliest": "1940-05-01",
+          "onset_latest": "1940-06-30",
+          "onset_label": "May-June 1940",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table (Netherlands/Belgium/Luxembourg/France, May-June 1940). Range-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "belgium",
+      "territory": "Belgium",
+      "match_terms": ["belgium", "belgien", "belgique", "belgie"],
+      "windows": [
+        {
+          "id": "belgium_1940",
+          "onset_earliest": "1940-05-01",
+          "onset_latest": "1940-06-30",
+          "onset_label": "May-June 1940",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table (Netherlands/Belgium/Luxembourg/France, May-June 1940). Range-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "luxembourg",
+      "territory": "Luxembourg",
+      "match_terms": ["luxembourg", "luxemburg"],
+      "windows": [
+        {
+          "id": "luxembourg_1940",
+          "onset_earliest": "1940-05-01",
+          "onset_latest": "1940-06-30",
+          "onset_label": "May-June 1940",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table (Netherlands/Belgium/Luxembourg/France, May-June 1940). Range-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "france",
+      "territory": "France",
+      "match_terms": ["france", "frankreich"],
+      "windows": [
+        {
+          "id": "france_1940",
+          "onset_earliest": "1940-05-01",
+          "onset_latest": "1940-06-30",
+          "onset_label": "May-June 1940",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table (Netherlands/Belgium/Luxembourg/France, May-June 1940). Range-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "greece",
+      "territory": "Greece",
+      "match_terms": ["greece", "griechenland"],
+      "windows": [
+        {
+          "id": "greece_1941",
+          "onset_earliest": "1941-04-01",
+          "onset_latest": "1941-04-30",
+          "onset_label": "April 1941",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table (Greece/Yugoslavia, April 1941). Month-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "yugoslavia",
+      "territory": "Yugoslavia",
+      "match_terms": ["yugoslavia", "jugoslawien", "jugoslavija"],
+      "windows": [
+        {
+          "id": "yugoslavia_1941",
+          "onset_earliest": "1941-04-01",
+          "onset_latest": "1941-04-30",
+          "onset_label": "April 1941",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table (Greece/Yugoslavia, April 1941). Month-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "italy",
+      "territory": "Italy",
+      "match_terms": ["italy", "italien", "italia"],
+      "_note": "Modelled as two windows because the Nuremberg threshold does not describe Italy's chronology. The 1938 racial laws (leggi razziali) began civil and property restriction; the September 1943 occupation is where persecution escalates to deportation-level. Applying the global 15 Sept 1935 threshold would report every 1938-1943 Italian transfer at the heightened tier, which overstates what the 1938 laws support; omitting the 1938 window entirely would under-flag that period, which is the more dangerous error. This split is an implementation-time modelling decision and needs confirmation by a provenance researcher or an admitted lawyer.",
+      "windows": [
+        {
+          "id": "italy_racial_laws_1938",
+          "onset_earliest": "1938-01-01",
+          "onset_latest": "1938-12-31",
+          "onset_label": "1938 (racial laws)",
+          "ends": "1943-08-31",
+          "presumption_tier": "ordinary",
+          "tier_basis": "the tier is set explicitly for this window: the 1938 racial laws established civil and property restriction, and the Nuremberg threshold does not govern the Italian chronology",
+          "source": "Project methodology notes, persecution-onset table ('Sep 1943 (racial laws from 1938)'). Year-level onset; no month or day is asserted."
+        },
+        {
+          "id": "italy_occupation_1943",
+          "onset_earliest": "1943-09-01",
+          "onset_latest": "1943-09-30",
+          "onset_label": "September 1943",
+          "presumption_tier": "heightened",
+          "tier_basis": "the tier is set explicitly for this window: September 1943 is the escalation point recorded in the source table for this territory",
+          "source": "Project methodology notes, persecution-onset table. Month-level onset; no day is asserted."
+        }
+      ]
+    },
+    {
+      "id": "hungary",
+      "territory": "Hungary",
+      "match_terms": ["hungary", "ungarn", "magyarorszag"],
+      "windows": [
+        {
+          "id": "hungary_1944",
+          "onset_earliest": "1944-03-19",
+          "onset_latest": "1944-03-19",
+          "onset_label": "19 March 1944",
+          "presumption_tier": "by_nuremberg_threshold",
+          "source": "Project methodology notes, persecution-onset table."
+        }
+      ]
+    }
+  ]
+}

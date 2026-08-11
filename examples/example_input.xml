@@ -1,0 +1,825 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC EXAMPLE. Every object, person, transaction, date and citation in
+  this file is invented. It exists to exercise the LIDO adapter's mappings and
+  the heuristic layer's rules; it describes no real object and asserts nothing
+  about any real person or institution.
+
+  It exercises, in order: the native eventType mappings (Purchase, Gift,
+  Restitution); the generic "Change of legal title" carrier with the REAO
+  state supplied through PROVENA_EXT; the five extension fields that have no
+  native LIDO carrier; date precision derived from the granularity of
+  earliestDate/latestDate, including a year expanded to 1 Jan - 31 Dec;
+  precision that only PROVENA_EXT can express (circa, before); place built
+  from a partOfPlace hierarchy; name variants through appellationValue
+  @lido:pref; source citation through sourceDescriptiveNote; and an eventType
+  the map deliberately leaves unmapped, which produces an ingest note rather
+  than a guessed REAO state.
+-->
+<lido:lidoWrap xmlns:lido="http://www.lido-schema.org"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- OBJ-101: pre-1945 chain, forced sale carried on the generic
+       "Change of legal title" event with the REAO state stated explicitly. -->
+  <lido:lido>
+    <lido:lidoRecID lido:type="local">OBJ-101</lido:lidoRecID>
+    <lido:descriptiveMetadata xml:lang="en">
+      <lido:objectClassificationWrap>
+        <lido:objectWorkTypeWrap>
+          <lido:objectWorkType>
+            <lido:term>painting</lido:term>
+          </lido:objectWorkType>
+        </lido:objectWorkTypeWrap>
+      </lido:objectClassificationWrap>
+      <lido:objectIdentificationWrap>
+        <lido:titleWrap>
+          <lido:titleSet>
+            <lido:appellationValue lido:pref="preferred">Meadow with Poplars</lido:appellationValue>
+          </lido:titleSet>
+        </lido:titleWrap>
+      </lido:objectIdentificationWrap>
+      <lido:eventWrap>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01016</lido:conceptID>
+              <lido:term>Purchase</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue lido:pref="preferred">Almqvist, H.</lido:appellationValue>
+                    <lido:appellationValue lido:pref="alternate">Almquist, H.</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:displayDate>1921</lido:displayDate>
+              <lido:date>
+                <lido:earliestDate>1921-01-01</lido:earliestDate>
+                <lido:latestDate>1921-12-31</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Munich</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Germany</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:sourceDescriptiveNote>Dealer stockbook 1921, fol. 44</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido00001</lido:conceptID>
+              <lido:term>Change of legal title</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Auktionshaus Steinbach</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>new owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Almqvist, H.</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>seller</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1936-11-04</lido:earliestDate>
+                <lido:latestDate>1936-11-04</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Munich</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Germany</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>Consignor not named in the catalogue.
+PROVENA_EXT:transaction_state=zwangsverkauf
+PROVENA_EXT:export_licence_present=false</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Auction catalogue, 4 Nov 1936, lot 210</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01016</lido:conceptID>
+              <lido:term>Purchase</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Municipal Art Collection</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1953</lido:earliestDate>
+                <lido:latestDate>1953</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Bern</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Switzerland</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>PROVENA_EXT:is_institution_acquisition=true</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Accession register 1953, no. 12</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+      </lido:eventWrap>
+    </lido:descriptiveMetadata>
+    <lido:administrativeMetadata xml:lang="en">
+      <lido:recordWrap>
+        <lido:recordID lido:type="local">OBJ-101</lido:recordID>
+        <lido:recordType>
+          <lido:term>item</lido:term>
+        </lido:recordType>
+      </lido:recordWrap>
+    </lido:administrativeMetadata>
+  </lido:lido>
+
+  <!-- OBJ-102: the chain begins at the institution's own accession, with no
+       prior owner recorded. Exercises rule PC-002. -->
+  <lido:lido>
+    <lido:lidoRecID lido:type="local">OBJ-102</lido:lidoRecID>
+    <lido:descriptiveMetadata xml:lang="en">
+      <lido:objectClassificationWrap>
+        <lido:objectWorkTypeWrap>
+          <lido:objectWorkType>
+            <lido:term>painting</lido:term>
+          </lido:objectWorkType>
+        </lido:objectWorkTypeWrap>
+      </lido:objectClassificationWrap>
+      <lido:objectIdentificationWrap>
+        <lido:titleWrap>
+          <lido:titleSet>
+            <lido:appellationValue>Portrait of a Bookbinder</lido:appellationValue>
+          </lido:titleSet>
+        </lido:titleWrap>
+      </lido:objectIdentificationWrap>
+      <lido:eventWrap>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido00996</lido:conceptID>
+              <lido:term>Gift</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Municipal Art Collection</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1962</lido:earliestDate>
+                <lido:latestDate>1962</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Bern</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Switzerland</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>No prior owner recorded in the accession file.
+PROVENA_EXT:is_institution_acquisition=true</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Accession register 1962, no. 88</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+      </lido:eventWrap>
+    </lido:descriptiveMetadata>
+    <lido:administrativeMetadata xml:lang="en">
+      <lido:recordWrap>
+        <lido:recordID lido:type="local">OBJ-102</lido:recordID>
+        <lido:recordType>
+          <lido:term>item</lido:term>
+        </lido:recordType>
+      </lido:recordWrap>
+    </lido:administrativeMetadata>
+  </lido:lido>
+
+  <!-- OBJ-103: a settled claim, restituted to a state rather than to named
+       heirs. The native Restitution term sets resolved_status; the recipient
+       type has no native carrier and comes through PROVENA_EXT, without which
+       rule PC-008 would report itself skipped. -->
+  <lido:lido>
+    <lido:lidoRecID lido:type="local">OBJ-103</lido:lidoRecID>
+    <lido:descriptiveMetadata xml:lang="en">
+      <lido:objectClassificationWrap>
+        <lido:objectWorkTypeWrap>
+          <lido:objectWorkType>
+            <lido:term>sculpture</lido:term>
+          </lido:objectWorkType>
+        </lido:objectWorkTypeWrap>
+      </lido:objectClassificationWrap>
+      <lido:objectIdentificationWrap>
+        <lido:titleWrap>
+          <lido:titleSet>
+            <lido:appellationValue>Head of a Reader</lido:appellationValue>
+          </lido:titleSet>
+        </lido:titleWrap>
+      </lido:objectIdentificationWrap>
+      <lido:eventWrap>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido00001</lido:conceptID>
+              <lido:term>Change of legal title</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Rasmussen, T.</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1938-09-14</lido:earliestDate>
+                <lido:latestDate>1938-09-14</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Vienna</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Austria</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>PROVENA_EXT:transaction_state=zwangsverkauf</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Restitution file 1950, encl. 1</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido00724</lido:conceptID>
+              <lido:term>Restitution</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Republic of Austria</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>recipient</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1950-06-01</lido:earliestDate>
+                <lido:latestDate>1950-06-01</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Vienna</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Austria</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>Recorded as restituted to the state, not to named heirs.
+PROVENA_EXT:restitution_recipient_type=state_or_institution</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Restitution file 1950, decision of 1 Jun 1950</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+      </lido:eventWrap>
+    </lido:descriptiveMetadata>
+    <lido:administrativeMetadata xml:lang="en">
+      <lido:recordWrap>
+        <lido:recordID lido:type="local">OBJ-103</lido:recordID>
+        <lido:recordType>
+          <lido:term>item</lido:term>
+        </lido:recordType>
+      </lido:recordWrap>
+    </lido:administrativeMetadata>
+  </lido:lido>
+
+  <!-- OBJ-104: silver, so the object-class channel rule applies on class and
+       date alone. Precision here is `circa`, which no ISO date string can
+       express and which the adapter refuses to read out of a displayDate. -->
+  <lido:lido>
+    <lido:lidoRecID lido:type="local">OBJ-104</lido:lidoRecID>
+    <lido:descriptiveMetadata xml:lang="en">
+      <lido:objectClassificationWrap>
+        <lido:objectWorkTypeWrap>
+          <lido:objectWorkType>
+            <lido:term>silver</lido:term>
+          </lido:objectWorkType>
+        </lido:objectWorkTypeWrap>
+      </lido:objectClassificationWrap>
+      <lido:objectIdentificationWrap>
+        <lido:titleWrap>
+          <lido:titleSet>
+            <lido:appellationValue>Covered Beaker</lido:appellationValue>
+          </lido:titleSet>
+        </lido:titleWrap>
+      </lido:objectIdentificationWrap>
+      <lido:eventWrap>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido00001</lido:conceptID>
+              <lido:term>Change of legal title</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Cordes, H.</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:displayDate>um 1938</lido:displayDate>
+              <lido:date>
+                <lido:earliestDate>1938</lido:earliestDate>
+                <lido:latestDate>1938</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Berlin</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Germany</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>Date recorded only as approximate in the estate inventory.
+PROVENA_EXT:date_precision=circa
+PROVENA_EXT:transaction_state=vermutung_der_entziehung</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Estate inventory, undated, item 7</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01016</lido:conceptID>
+              <lido:term>Purchase</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Municipal Art Collection</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1968-01-01</lido:earliestDate>
+                <lido:latestDate>1968-12-31</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Bern</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Switzerland</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>PROVENA_EXT:is_institution_acquisition=true</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Accession register 1968, no. 4</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+      </lido:eventWrap>
+    </lido:descriptiveMetadata>
+    <lido:administrativeMetadata xml:lang="en">
+      <lido:recordWrap>
+        <lido:recordID lido:type="local">OBJ-104</lido:recordID>
+        <lido:recordType>
+          <lido:term>item</lido:term>
+        </lido:recordType>
+      </lido:recordWrap>
+    </lido:administrativeMetadata>
+  </lido:lido>
+
+  <!-- OBJ-105: an eventType the map deliberately leaves unmapped. LIDO's
+       "Looting" does not distinguish a state seizure from a private theft, so
+       no REAO state is derived from it; the record is screened as `unknown`
+       and an ingest note names the term. The event is still flagged by the
+       persecution-window rule — nothing drops out of triage. The second event
+       has an anonymous owner inside the 1933-1950 band. -->
+  <lido:lido>
+    <lido:lidoRecID lido:type="local">OBJ-105</lido:lidoRecID>
+    <lido:descriptiveMetadata xml:lang="en">
+      <lido:objectClassificationWrap>
+        <lido:objectWorkTypeWrap>
+          <lido:objectWorkType>
+            <lido:term>drawing</lido:term>
+          </lido:objectWorkType>
+        </lido:objectWorkTypeWrap>
+      </lido:objectClassificationWrap>
+      <lido:objectIdentificationWrap>
+        <lido:titleWrap>
+          <lido:titleSet>
+            <lido:appellationValue>Study of a Bridge</lido:appellationValue>
+          </lido:titleSet>
+        </lido:titleWrap>
+      </lido:objectIdentificationWrap>
+      <lido:eventWrap>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01011</lido:conceptID>
+              <lido:term>Looting</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Bervoets, J.</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1942-03</lido:earliestDate>
+                <lido:latestDate>1942-03</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Paris</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>France</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01130</lido:conceptID>
+              <lido:term>Unknown provenance event</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Private collection</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:latestDate>1948</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Zurich</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Switzerland</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>Recorded in the vendor's note only as held before 1948.
+PROVENA_EXT:date_precision=before</lido:descriptiveNoteValue>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01016</lido:conceptID>
+              <lido:term>Purchase</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Municipal Art Collection</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>2004</lido:earliestDate>
+                <lido:latestDate>2004</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Bern</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Switzerland</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>PROVENA_EXT:is_institution_acquisition=true</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Accession register 2004, no. 61</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+      </lido:eventWrap>
+    </lido:descriptiveMetadata>
+    <lido:administrativeMetadata xml:lang="en">
+      <lido:recordWrap>
+        <lido:recordID lido:type="local">OBJ-105</lido:recordID>
+        <lido:recordType>
+          <lido:term>item</lido:term>
+        </lido:recordType>
+      </lido:recordWrap>
+    </lido:administrativeMetadata>
+  </lido:lido>
+
+  <!-- OBJ-106: published in a pre-1933 catalogue with a named owner and again
+       after 1950 without one. Both catalogue fields have no native LIDO
+       carrier. Exercises rule PC-007. -->
+  <lido:lido>
+    <lido:lidoRecID lido:type="local">OBJ-106</lido:lidoRecID>
+    <lido:descriptiveMetadata xml:lang="en">
+      <lido:objectClassificationWrap>
+        <lido:objectWorkTypeWrap>
+          <lido:objectWorkType>
+            <lido:term>painting</lido:term>
+          </lido:objectWorkType>
+        </lido:objectWorkTypeWrap>
+      </lido:objectClassificationWrap>
+      <lido:objectIdentificationWrap>
+        <lido:titleWrap>
+          <lido:titleSet>
+            <lido:appellationValue>Woman at a Window</lido:appellationValue>
+          </lido:titleSet>
+        </lido:titleWrap>
+      </lido:objectIdentificationWrap>
+      <lido:eventWrap>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01016</lido:conceptID>
+              <lido:term>Purchase</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Lindqvist, A.</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1928</lido:earliestDate>
+                <lido:latestDate>1928</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Copenhagen</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Denmark</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>PROVENA_EXT:catalogue_reference=Catalogue raisonne, 1928 edn, no. 214
+PROVENA_EXT:owner_stated_in_catalogue=true</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Catalogue raisonne, 1928 edn, no. 214</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01130</lido:conceptID>
+              <lido:term>Unknown provenance event</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>not recorded</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1961</lido:earliestDate>
+                <lido:latestDate>1961</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Copenhagen</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Denmark</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>Owner named in the 1928 edition is absent from this entry.
+PROVENA_EXT:catalogue_reference=Revised catalogue raisonne, 1961 edn, no. 198
+PROVENA_EXT:owner_stated_in_catalogue=false</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Revised catalogue raisonne, 1961 edn, no. 198</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventType>
+              <lido:conceptID lido:type="URI">http://terminology.lido-schema.org/lido01016</lido:conceptID>
+              <lido:term>Purchase</lido:term>
+            </lido:eventType>
+            <lido:eventActor>
+              <lido:actorInRole>
+                <lido:actor>
+                  <lido:nameActorSet>
+                    <lido:appellationValue>Municipal Art Collection</lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:term>owner</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <lido:eventDate>
+              <lido:date>
+                <lido:earliestDate>1972</lido:earliestDate>
+                <lido:latestDate>1972</lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:place>
+                <lido:namePlaceSet>
+                  <lido:appellationValue>Bern</lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:partOfPlace>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue>Switzerland</lido:appellationValue>
+                  </lido:namePlaceSet>
+                </lido:partOfPlace>
+              </lido:place>
+            </lido:eventPlace>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteValue>PROVENA_EXT:is_institution_acquisition=true</lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Accession register 1972, no. 5</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          </lido:event>
+        </lido:eventSet>
+      </lido:eventWrap>
+    </lido:descriptiveMetadata>
+    <lido:administrativeMetadata xml:lang="en">
+      <lido:recordWrap>
+        <lido:recordID lido:type="local">OBJ-106</lido:recordID>
+        <lido:recordType>
+          <lido:term>item</lido:term>
+        </lido:recordType>
+      </lido:recordWrap>
+    </lido:administrativeMetadata>
+  </lido:lido>
+
+</lido:lidoWrap>

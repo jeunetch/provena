@@ -1,0 +1,185 @@
+{
+  "_meta": {
+    "status": "SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE",
+    "description": "Auction houses and agencies documented as channels for Nazi-era confiscated/forced-sale art. A match here is a signal to check the specific transaction, not an accusation against the entity generally — several of these are real businesses still operating today, and most Nazi-era-documented auction houses handled both legitimate and forced/looted transactions. See critical_context for required framing.",
+    "critical_context": "Mention of one of these entities in a provenance record is not itself evidence of a forced sale or looting — several sources explicitly warn against treating mere name-mention as proof (see Lempertz entry). Every match must be rendered with the specific historical basis cited below, and the object's own transaction_state/date/circumstances must be evaluated on their own evidence, not inferred solely from the venue.",
+    "last_verified": "2026-08-09",
+    "gate_field_note": "`implies_persecution_of_former_owner` was added per documented_basis limb so the matching logic can carry the distinction this file states in prose, rather than leaving it to a reader. Each value is transcribed from that entry's own basis text and carries a `gate_basis` quoting why; no new claim is made about any entity. The Galerie Fischer basis was split into its two limbs exactly where the entry itself says 'Separately,' — both texts are preserved verbatim. Like everything else here, this needs confirmation from a provenance researcher before production use."
+  },
+  "entries": [
+    {
+      "name": "Weinmüller (Münchener Kunstversteigerungshaus Adolf Weinmüller)",
+      "name_variants": [
+        "Adolf Weinmüller",
+        "Weinmueller",
+        "Weinmüller Munich",
+        "Weinmüller Vienna"
+      ],
+      "location": "Munich and Vienna",
+      "active_period": "1936-1945 (Munich); 1938-1944 (Vienna)",
+      "documented_basis": [
+        {
+          "summary": "Aryanized two Jewish-owned auction houses — Hugo Helbing's in Munich (1936) and the Kende family's in Vienna (1938) — and subsequently auctioned art seized from Jewish dealers and collectors, including consigned Gestapo-seized property (e.g. the Laemmle collection). Investigated post-war by the ALIU and listed as a Red Flag Name. Predecessor to the present-day Neumeister auction house, Munich.",
+          "period": "1936-1945 (Munich); 1938-1944 (Vienna)",
+          "sources": [
+            "https://www.proveana.de/en/project/adolf-weinmullers-galleries-and-auction-houses-munich-and-vienna-1936-1945",
+            "https://pilot-demo.jdcrp.org/people/weinmuller_adolf-/",
+            "https://www.cnn.com/2019/04/21/us/nazi-stolen-art-returned/index.html"
+          ],
+          "implies_persecution_of_former_owner": true,
+          "gate_basis": "TRUE per the entry's own words: the entry's own basis states the house 'auctioned art seized from Jewish dealers and collectors, including consigned Gestapo-seized property'."
+        }
+      ],
+      "sources": [
+        "https://www.proveana.de/en/project/adolf-weinmullers-galleries-and-auction-houses-munich-and-vienna-1936-1945",
+        "https://pilot-demo.jdcrp.org/people/weinmuller_adolf-/",
+        "https://www.cnn.com/2019/04/21/us/nazi-stolen-art-returned/index.html"
+      ],
+      "verification_note": "Strongly corroborated across Bavarian state provenance research project, JDCRP, CNN, and Wikipedia independently."
+    },
+    {
+      "name": "Galerie Fischer (Lucerne)",
+      "name_variants": [
+        "Theodor Fischer",
+        "Galerie Fischer Lucerne",
+        "Galerie Fischer Luzern"
+      ],
+      "location": "Lucerne, Switzerland",
+      "active_period": "Specifically flagged: 30 June 1939 auction. Broader wartime activity separately documented.",
+      "documented_basis": [
+        {
+          "summary": "IMPORTANT DISTINCTION — do not conflate: the 30 June 1939 sale at the Grand Hotel National specifically auctioned 'Degenerate Art' confiscated by the Nazi state from GERMAN STATE MUSEUMS (not privately-owned Jewish collections) — a different legal category from persecuted-individual forced sales.",
+          "period": "30 June 1939 auction, Grand Hotel National, Lucerne",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Degenerate_Art_auction",
+            "https://pilot-demo.jdcrp.org/event/1939-06-30-fischer-auction/"
+          ],
+          "implies_persecution_of_former_owner": false,
+          "gate_basis": "FALSE per the entry's own words: the works auctioned were confiscated from GERMAN STATE MUSEUMS, not privately-owned collections, which the entry itself calls 'a different legal category from persecuted-individual forced sales'."
+        },
+        {
+          "summary": "Separately, Wikipedia's biography of Theodor Fischer states he 'played a key part in the trading of art looted by the Germans from occupied countries' during the broader war period — this is a distinct claim about private/looted (not state 'degenerate art') property and needs its own case-level verification, not assumed from the 1939 sale alone.",
+          "period": "broader wartime period",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Theodor_Fischer_(auctioneer)"
+          ],
+          "implies_persecution_of_former_owner": false,
+          "gate_basis": "FALSE per the entry's own words: this limb 'needs its own case-level verification, not assumed from the 1939 sale alone'. It is single-sourced and cannot carry an inference about any specific object's former owner."
+        }
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Degenerate_Art_auction",
+        "https://en.wikipedia.org/wiki/Theodor_Fischer_(auctioneer)",
+        "https://pilot-demo.jdcrp.org/event/1939-06-30-fischer-auction/"
+      ],
+      "verification_note": "The 30 June 1939 date/venue/category is very strongly corroborated (5+ independent sources). The broader wartime looted-art-trading claim is single-sourced (Wikipedia) — verify independently before relying on it for anything beyond the 1939 state-museum sale specifically."
+    },
+    {
+      "name": "Lempertz (Cologne)",
+      "name_variants": [
+        "Kunsthaus Lempertz",
+        "Lempertz Cologne",
+        "Lempertz Köln"
+      ],
+      "location": "Cologne, Germany",
+      "active_period": "1933-1945, still operating today",
+      "documented_basis": [
+        {
+          "summary": "Listed by the ALIU as a Red Flag Name in 1946. Documented case: Nazis forced dealer Max Stern to consign several hundred works from his family's Düsseldorf gallery to Lempertz for a Nazi-sanctioned forced sale (Dec 1939), including a 1632 Dutch portrait later subject to restitution research (Wikidata-documented). Still an operating auction house — this entry is about specific historical transactions, not a characterization of the current business.",
+          "period": "1933-1945, still operating today",
+          "sources": [
+            "https://www.wikidata.org/wiki/Q1272748",
+            "https://www.openartdata.org/2025/10/holocaust-art-research-digital-tools.html"
+          ],
+          "implies_persecution_of_former_owner": true,
+          "gate_basis": "TRUE per the entry's own words: the entry's own basis states 'Nazis forced dealer Max Stern to consign several hundred works ... for a Nazi-sanctioned forced sale'."
+        }
+      ],
+      "sources": [
+        "https://www.wikidata.org/wiki/Q1272748",
+        "https://www.openartdata.org/2025/10/holocaust-art-research-digital-tools.html"
+      ],
+      "verification_note": "ALIU listing and Max Stern case both independently corroborated. Note explicitly that mere name-mention in a provenance record is not itself evidence — cited source explicitly warns of this."
+    },
+    {
+      "name": "Dorotheum (Vienna)",
+      "name_variants": [
+        "Dorotheum Wien",
+        "Dorotheum Vienna"
+      ],
+      "location": "Vienna, Austria",
+      "active_period": "1938-1945, still operating today",
+      "documented_basis": [
+        {
+          "summary": "Documented as a co-venue (with Weinmüller in Munich) for auctioning cultural assets seized from Jews and other Nazi-designated 'enemies of the state' at Gestapo headquarters, Prague, per a June 1941 inspection commission.",
+          "period": "1938-1945, still operating today",
+          "sources": [
+            "https://justapedia.org/wiki/Adolf_Weinm%C3%BCller",
+            "https://pilot-demo.jdcrp.org/people/weinmuller_adolf-/"
+          ],
+          "implies_persecution_of_former_owner": true,
+          "gate_basis": "TRUE per the entry's own words: the entry's own basis states the venue auctioned 'cultural assets seized from Jews and other Nazi-designated ‘enemies of the state’'."
+        }
+      ],
+      "sources": [
+        "https://justapedia.org/wiki/Adolf_Weinm%C3%BCller",
+        "https://pilot-demo.jdcrp.org/people/weinmuller_adolf-/"
+      ],
+      "verification_note": "WEAKER SOURCING than the other entries — corroborated only via the Weinmüller research (two sources, both discussing Dorotheum as a secondary detail, not a dedicated Dorotheum-focused source). Get a dedicated citation before treating as fully verified."
+    },
+    {
+      "name": "Sonderauftrag Linz",
+      "name_variants": [
+        "Special Commission Linz",
+        "Linz Special Commission",
+        "Führermuseum Linz"
+      ],
+      "location": "Linz, Austria (planned museum); acquisitions made across Europe",
+      "active_period": "1939-1945",
+      "documented_basis": [
+        {
+          "summary": "Hitler's personal art-acquisition project for a planned museum in Linz; well-established organizational entity in Nazi art appropriation, corroborated across numerous independent historical sources.",
+          "period": "1939-1945",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Art_Looting_Investigation_Unit",
+            "https://artmusem-collections-online.webapps.iu.edu/provenance/ww2/index.php"
+          ],
+          "implies_persecution_of_former_owner": true,
+          "gate_basis": "TRUE per the entry's own words: the entry's own basis describes a 'well-established organizational entity in Nazi art appropriation'."
+        }
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Art_Looting_Investigation_Unit",
+        "https://artmusem-collections-online.webapps.iu.edu/provenance/ww2/index.php"
+      ],
+      "verification_note": "Extremely well-established historical entity, corroborated across 5+ independent sources encountered during research. No further verification needed."
+    },
+    {
+      "name": "ERR (Einsatzstab Reichsleiter Rosenberg)",
+      "name_variants": [
+        "Einsatzstab Reichsleiter Rosenberg",
+        "ERR",
+        "Rosenberg Taskforce"
+      ],
+      "location": "Primarily France; operated across occupied territories",
+      "active_period": "1940-1944",
+      "documented_basis": [
+        {
+          "summary": "The primary Nazi organizational agency for art confiscation in occupied territories, overseen by the ALIU's own investigative reports (CIR No. 1, Aug 1945). Well-established, uncontroversial historical entity.",
+          "period": "1940-1944",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Art_Looting_Investigation_Unit",
+            "https://artmusem-collections-online.webapps.iu.edu/provenance/ww2/index.php"
+          ],
+          "implies_persecution_of_former_owner": true,
+          "gate_basis": "TRUE per the entry's own words: the entry's own basis describes 'the primary Nazi organizational agency for art confiscation in occupied territories'."
+        }
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Art_Looting_Investigation_Unit",
+        "https://artmusem-collections-online.webapps.iu.edu/provenance/ww2/index.php"
+      ],
+      "verification_note": "Extremely well-established historical entity, corroborated across numerous independent sources encountered during research. No further verification needed."
+    }
+  ]
+}

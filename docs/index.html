@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provenance triage report</title>
+<style>
+:root {
+  --bg: #f6f6f4;
+  --surface: #ffffff;
+  --border: #d9d7d1;
+  --border-strong: #b3b0a8;
+  --ink: #1c1b19;
+  --ink-soft: #55524c;
+  --ink-faint: #7d7a72;
+  --accent: #2f4858;
+  --notice-bg: #f2efe6;
+  --notice-border: #c9bfa3;
+  --fill-a: #2f4858;
+  --fill-b: #7d8f99;
+  --fill-c: #d0cdc5;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181a;
+    --surface: #1f2124;
+    --border: #34373b;
+    --border-strong: #4c5055;
+    --ink: #e9e8e4;
+    --ink-soft: #b2b0ab;
+    --ink-faint: #85837e;
+    --accent: #9fb8c6;
+    --notice-bg: #26251f;
+    --notice-border: #5c5540;
+    --fill-a: #9fb8c6;
+    --fill-b: #5d7078;
+    --fill-c: #3a3d41;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 62rem; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+h1 { font-size: 1.65rem; margin: 0 0 .3rem; letter-spacing: -.01em; }
+h2 {
+  font-size: 1.15rem; margin: 0 0 .2rem; letter-spacing: -.005em;
+}
+h3 { font-size: .95rem; margin: 0 0 .4rem; }
+p { margin: 0 0 .8rem; }
+a { color: var(--accent); }
+.meta { color: var(--ink-faint); font-size: .8rem; margin-bottom: 1.5rem; }
+.meta span::after { content: " · "; }
+.meta span:last-child::after { content: ""; }
+
+section { margin-bottom: 2.75rem; }
+.section-head {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: .5rem;
+  margin-bottom: 1.25rem;
+}
+.section-head .step {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-faint); display: block; margin-bottom: .2rem;
+}
+.lede { color: var(--ink-soft); font-size: .9rem; max-width: 46rem; }
+
+.notice {
+  background: var(--notice-bg);
+  border: 1px solid var(--notice-border);
+  border-left-width: 4px;
+  padding: 1rem 1.1rem;
+  font-size: .875rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+.notice strong { display: block; margin-bottom: .35rem; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+.tile { background: var(--surface); border: 1px solid var(--border); padding: .85rem .9rem; }
+.tile .n { font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile .k { font-size: .78rem; color: var(--ink-soft); margin-top: .25rem; }
+
+.bar { display: flex; height: 2.1rem; border: 1px solid var(--border-strong); overflow: hidden; }
+.bar div { display: flex; align-items: center; justify-content: center; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.seg-a { background: var(--fill-a); color: var(--bg); }
+.seg-b { background: var(--fill-b); color: var(--bg); }
+.seg-c { background: var(--fill-c); color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .6rem; font-size: .8rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: .75rem; height: .75rem; margin-right: .35rem; vertical-align: -1px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1.25rem; }
+.controls input[type=search] {
+  flex: 1 1 14rem; padding: .5rem .65rem; font: inherit; font-size: .875rem;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border-strong);
+}
+.controls label { font-size: .82rem; color: var(--ink-soft); display: flex; align-items: center; gap: .35rem; }
+
+.band { margin-bottom: 2rem; }
+.band-head { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .15rem; }
+.band-head .mark { flex: none; }
+.band-head h3 { margin: 0; }
+.band-head .count { color: var(--ink-faint); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.band-desc { font-size: .82rem; color: var(--ink-faint); margin: 0 0 .7rem; max-width: 44rem; }
+
+/* Shape-coded, never colour-coded: a red/amber/green scheme would
+   reintroduce the severity grade the methodology forbids. */
+.mark { display: inline-block; width: .7rem; height: .7rem; border: 1.5px solid var(--ink); }
+.mark-heightened { background: var(--ink); }
+.mark-ordinary { background: transparent; }
+.mark-namelist { background: var(--ink); border-radius: 50%; }
+.mark-settlement { background: transparent; border-style: double; border-width: 4px; }
+.mark-coverage { background: transparent; border-style: dotted; }
+.mark-documentation { background: transparent; border-radius: 50%; }
+.mark-none { background: transparent; border-color: var(--border-strong); }
+
+.citations { margin-top: 1.1rem; border: 1px dashed var(--border-strong); padding: .7rem .8rem; }
+.citations > h4 {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--ink-faint); margin: 0 0 .4rem; font-weight: 600;
+}
+.citations .not-a-flag {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
+  border: 1px solid var(--border-strong); padding: .1rem .4rem;
+  display: inline-block; margin-bottom: .5rem;
+}
+.citation-note { font-size: .82rem; margin-bottom: .5rem; }
+.obj .cite-tag { font-size: .72rem; color: var(--ink-faint); flex: none; margin-left: .5rem; }
+.context-note {
+  background: var(--notice-bg); border: 1px solid var(--notice-border);
+  border-left-width: 4px; padding: .8rem .9rem; font-size: .82rem; margin-bottom: 1.5rem;
+}
+.context-note strong { display: block; margin-bottom: .3rem; }
+.skipped { font-size: .8rem; color: var(--ink-soft); }
+.skipped li { margin-bottom: .4rem; }
+
+.obj {
+  background: var(--surface); border: 1px solid var(--border);
+  margin-bottom: .6rem;
+}
+.obj > summary {
+  padding: .8rem .95rem; cursor: pointer; list-style: none;
+  display: flex; gap: .7rem; align-items: baseline;
+}
+.obj > summary::-webkit-details-marker { display: none; }
+.obj > summary::before {
+  content: "▸"; color: var(--ink-faint); font-size: .8rem; flex: none;
+}
+.obj[open] > summary::before { content: "▾"; }
+.obj .id { font-family: var(--mono); font-size: .8rem; color: var(--ink-soft); flex: none; }
+.obj .title { font-weight: 600; font-size: .92rem; }
+.obj .tally { margin-left: auto; font-size: .78rem; color: var(--ink-faint); flex: none; }
+.obj-body { padding: 0 .95rem 1rem; border-top: 1px solid var(--border); }
+
+.screening {
+  font-size: .84rem; color: var(--ink-soft); background: var(--bg);
+  border-left: 3px solid var(--border-strong); padding: .6rem .75rem; margin: .9rem 0;
+}
+.axis { margin-top: 1.1rem; }
+.axis > h4 {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--ink-faint); margin: 0 0 .5rem; font-weight: 600;
+}
+.flag { border: 1px solid var(--border); margin-bottom: .5rem; }
+.flag > summary { padding: .6rem .7rem; cursor: pointer; font-size: .86rem; list-style: none; }
+.flag > summary::-webkit-details-marker { display: none; }
+.flag .rid { font-family: var(--mono); font-size: .74rem; color: var(--ink-faint); margin-right: .45rem; }
+.tier {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .07em;
+  border: 1px solid var(--border-strong); padding: .05rem .35rem; margin-left: .35rem;
+  color: var(--ink-soft); white-space: nowrap;
+}
+.flag-body { padding: .1rem .7rem .7rem; font-size: .82rem; }
+.flag-body h5 {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-faint); margin: .8rem 0 .3rem; font-weight: 600;
+}
+table.cited { width: 100%; border-collapse: collapse; font-size: .78rem; }
+table.cited th, table.cited td {
+  text-align: left; vertical-align: top; padding: .3rem .5rem .3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+table.cited th { width: 12rem; font-weight: 500; color: var(--ink-soft); font-family: var(--mono); font-size: .72rem; }
+table.cited td { font-family: var(--mono); font-size: .74rem; word-break: break-word; }
+.nested-item { padding: .3rem 0; border-bottom: 1px dotted var(--border); }
+.nested-item:last-child { border-bottom: none; }
+.nested-line { margin-bottom: .15rem; }
+.nested-key { color: var(--ink-faint); }
+.methodology { color: var(--ink-soft); font-size: .78rem; line-height: 1.55; }
+.coverage { margin-top: 1.1rem; font-size: .78rem; color: var(--ink-faint); line-height: 1.6; }
+.empty { color: var(--ink-faint); font-size: .85rem; font-style: italic; }
+
+footer { border-top: 1px solid var(--border); padding-top: 1.5rem; font-size: .8rem; color: var(--ink-faint); }
+footer h3 { color: var(--ink-soft); }
+footer ul { padding-left: 1.1rem; margin: 0 0 1rem; }
+footer li { margin-bottom: .25rem; }
+@media print {
+  body { background: #fff; }
+  .controls { display: none; }
+  .obj-body, .flag-body { display: block !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Provenance triage report</h1>
+  <div class="meta" id="meta"></div>
+
+  <div class="notice" id="disclaimer"></div>
+
+  <div class="notice" id="ingest-block" hidden>
+    <strong>What the input conversion did not carry over</strong>
+    <span>Converting this file into the internal schema left the following unresolved. Each is a place where the source says something the screening could not use, so the criteria below ran against less than the record contains.</span>
+    <ul class="skipped" id="ingest-notes"></ul>
+  </div>
+
+  <section id="coverage-section">
+    <div class="section-head">
+      <span class="step">First</span>
+      <h2>Coverage map</h2>
+    </div>
+    <p class="lede">How much provenance documentation exists across the records supplied. These are counts of documentation, not of risk, and they describe the records rather than the objects.</p>
+    <div class="tiles" id="tiles"></div>
+    <h3>Pre-1945 documentation</h3>
+    <div class="bar" id="bar"></div>
+    <div class="legend" id="legend"></div>
+    <p class="coverage" id="coverage-note"></p>
+  </section>
+
+  <section id="queue-section">
+    <div class="section-head">
+      <span class="step">Second</span>
+      <h2>Work queue</h2>
+    </div>
+    <p class="lede">A suggested order for sequencing research, grouped by which criteria triggered. The groups describe <em>what the records say</em>, not how serious an object is: there is no score, no grade, and no ranking of objects within a group. Markers are shape-coded rather than colour-coded so that nothing reads as a traffic light.</p>
+    <div class="controls">
+      <input type="search" id="search" placeholder="Filter by object ID or title" aria-label="Filter by object ID or title">
+      <label><input type="checkbox" id="show-resolved"> show previously resolved</label>
+    </div>
+    <div id="queue"></div>
+  </section>
+
+  <footer>
+    <h3>Criteria screened</h3>
+    <ul id="criteria"></ul>
+    <div id="not-run-block" hidden>
+      <h3>Criteria that could not run</h3>
+      <ul class="skipped" id="not-run"></ul>
+    </div>
+    <h3>Date precision</h3>
+    <p id="precision-note"></p>
+    <h3>Acquisition commitment date</h3>
+    <p id="commitment-note"></p>
+    <h3>Persecution-onset table</h3>
+    <p id="table-note"></p>
+    <h3>Plain-language restatements</h3>
+    <p id="llm-note"></p>
+    <div id="reference-lists-block" hidden>
+      <h3>Reference lists</h3>
+      <ul class="skipped" id="reference-lists"></ul>
+    </div>
+  </footer>
+</div>
+
+<script id="triage-data" type="application/json">{"disclaimer": "This output is machine-generated triage. It is not a provenance report, not provenance research, and not a legal determination. It has not been reviewed by a provenance researcher or by an admitted lawyer. It records only what the supplied records do and do not say, measured against the criteria listed in this file; it verifies nothing against any external source, and no external source was consulted. A triggered criterion is a question for a human researcher. An untriggered criterion is not a clearance: absence of flags is not evidence of unproblematic provenance. Nothing here should be represented, internally or externally, as a finding about any object, transaction or named person.", "generated_at": "2026-08-11T17:22:25+00:00", "input_file": "examples/example_input.csv", "input_format": "csv", "ingest_notes": [], "onset_table_version": "2026-08-09b", "onset_table_review_status": "NOT reviewed by an admitted lawyer or a professional provenance researcher. The territory list and onset dates are transcribed from the project methodology notes; the Italy two-window model is a modeling decision made during implementation and needs expert confirmation.", "date_precision_handling": {"circa_margin_years": 5, "note": "The `circa` margin is a placeholder with no sourced basis, not a validated field-practice figure. It widens a circa date only so that overlap questions can be asked of it; it is never used to compute or report an interval length, and a widened date can never yield a 'certain' overlap."}, "commitment_date": {"applied": "1998-12-03", "is_default": true, "source": "Washington Conference Principles on Nazi-Confiscated Art, released 3 December 1998 — the default where the institution has not recorded its own commitment date. An institution that adopted the Principles on a different date should configure that date instead."}, "reference_lists": {"aliu_red_flag_names": {"loaded_from": "/home/user/provena/data/aliu_red_flag_names.json", "entries": 3, "exonerating_entries": 1, "list_status": "SEED — INCOMPLETE, NOT FOR PRODUCTION USE", "is_incomplete": true, "non_match_caveat": "This list declares itself incomplete. A non-match is not evidence that a name is absent from the full ALIU Red Flag Names List.", "critical_scholarly_context": "The list is under active critical reassessment — see University of Bonn KHI project 'Under suspicion: a critical analysis of the Red Flag Names List of 1945/46' (https://www.khi.uni-bonn.de/fpk/en/news-1/unter-verdacht-eine-kritische-untersuchung-der-red-flag-names-liste-von-1945-46). Presence on this list is a 1946 investigative note, not a legal finding — some entries explicitly exonerate the named individual (see Metternich entry below). Every match rendered by this tool must include the entry's original annotation, never a bare 'flagged' label."}, "confiscation_channel_actors": {"loaded_from": "/home/user/provena/data/confiscation_channel_actors.json", "entries": 6, "list_status": "SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE", "is_incomplete": true, "non_match_caveat": "This list declares itself non-exhaustive. A non-match is not evidence that no confiscation-channel actor was involved.", "critical_context": "Mention of one of these entities in a provenance record is not itself evidence of a forced sale or looting — several sources explicitly warn against treating mere name-mention as proof (see Lempertz entry). Every match must be rendered with the specific historical basis cited below, and the object's own transaction_state/date/circumstances must be evaluated on their own evidence, not inferred solely from the venue."}, "anonymous_owner_patterns": {"version": "2026-08-09", "patterns": 23, "band": "1933-01-01 to 1950-12-31"}}, "llm_layer": {"enabled": false, "note": "The LLM explanation layer did not run. Every llm_explanation is null and no record data left this machine. The deterministic rule_statement on each flag carries the finding regardless — the LLM only ever restates it in plainer words."}, "criteria_screened": [{"rule_id": "PC-001", "title": "No pre-1945 provenance recorded", "axis": "persecution_context"}, {"rule_id": "PC-002", "title": "Chain begins at institutional acquisition", "axis": "persecution_context"}, {"rule_id": "PC-003", "title": "Transfer engages a persecution window (REAO presumption tier)", "axis": "persecution_context"}, {"rule_id": "PC-004", "title": "Object class moved through a channel that left no chain", "axis": "persecution_context"}, {"rule_id": "PC-005", "title": "Party matches the confiscation-channel actor list", "axis": "persecution_context"}, {"rule_id": "PC-006", "title": "Anonymous owner entry inside the 1933-1950 band", "axis": "persecution_context"}, {"rule_id": "PC-007", "title": "Owner named pre-1933 absent from a post-1950 catalogue entry", "axis": "persecution_context"}, {"rule_id": "PC-008", "title": "Restitution recorded to a state rather than to individuals or heirs", "axis": "persecution_context"}, {"rule_id": "PC-009", "title": "Cross-border movement 1933-1945 without a recorded export licence", "axis": "persecution_context"}, {"rule_id": "NM-001", "title": "Name matches an ALIU Red Flag Names List documented-concern entry", "axis": "persecution_context"}, {"rule_id": "DQ-001", "title": "Transaction lacks a source citation", "axis": "documentation_quality"}, {"rule_id": "DQ-002", "title": "Acquired after the commitment date with a thin pre-1945 chain", "axis": "documentation_quality"}], "criteria_not_run": [], "coverage_map": {"objects_processed": 24, "with_any_pre_1945_provenance": 21, "of_which_certainly_dated_pre_1945": 19, "with_no_pre_1945_provenance": 3, "chain_begins_at_institutional_acquisition": 2, "institutional_acquisition_not_determinable": 2, "previously_resolved": 3, "note": "Counts describe how much documentation exists, not how much risk. `institutional_acquisition_not_determinable` counts objects whose records do not mark which event is the institution's own accession, so that criterion could not run."}, "objects": [{"object_id": "OBJ-001", "object_title": "Landscape with Two Figures", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 3", "owner_name": "Auktionshaus Steinbach", "date_span": "1936-11-04 (exact)", "location": "Munich, Germany", "transaction_state": "zwangsverkauf", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "sale under persecution"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-002", "object_title": "Portrait of a Woman", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 2 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-001", "rule_statement": "Unverified: is there any documentation of ownership before 1945? No record in the supplied chain is dated, even allowing for its stated date precision, before 1 January 1945.", "methodology": "Washington Principles (1998) §§1-2 and Terezin Declaration (2009): identifying objects that carry no pre-1945 ownership documentation is the precondition for provenance research. The absence of a pre-1945 chain is a research gap, not a finding about the object.", "cited_fields": {"records_in_chain": 1, "dated_records_in_chain": 1, "recorded_dates": [{"source_ref": "example_input.csv:row 5", "date": "1962 (year)"}], "undated_records": [], "threshold": "1945-01-01"}, "presumption_tier": "n/a", "llm_explanation": null}, {"rule_id": "PC-002", "rule_statement": "Unverified: who held this object before the institution acquired it? The earliest record in the supplied chain is the institution's own acquisition, and no prior owner is recorded.", "methodology": "Washington Principles (1998) §§1-2: a chain whose earliest entry is the institution's own accession documents the institution's holding, not the object's history before it.", "cited_fields": {"source_ref": "example_input.csv:row 5", "owner_name": "Municipal Art Collection", "date_span": "1962 (year)", "transaction_state": "purchase", "is_institution_acquisition": true, "records_earlier_in_chain": 0, "records_in_chain": 1}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-003", "object_title": "Still Life with Jug", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 2 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date may overlap (the stated date precision does not settle it) the persecution window for Austria (onset 13 March 1938, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 6", "owner_name": "Berglund, M.", "date_span": "1938 (circa)", "location": "Vienna, Austria", "transaction_state": "unknown", "territory": "Austria", "persecution_window": "austria_1938", "persecution_onset": "13 March 1938", "onset_earliest": "1938-03-13", "onset_latest": "1938-03-13", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "possible", "presumption_tier_basis": "date-precision dependent: the stated precision 'circa' leaves the transfer's position relative to 1935-09-15 (Nuremberg Laws) undetermined", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "unknown"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [{"rule_id": "DQ-001", "rule_statement": "Unverified: what documentary source records this transaction? No `source_citation` is present. This is a records-completeness observation and says nothing about the object's persecution context.", "methodology": "Documentation-completeness axis. A missing source citation is a records-quality signal only and carries no implication about persecution context; it is reported on a separate axis for that reason.", "cited_fields": {"source_ref": "example_input.csv:row 7", "owner_name": "Municipal Art Collection", "date_span": "1957 (year)", "transaction_state": "purchase", "source_citation": null}, "llm_explanation": null}], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. PC-001 did not trigger, but the object's pre-1945 coverage rests only on imprecisely dated records; no record is certainly dated before 1945. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-004", "object_title": "Beaker with Lid", "object_class": "silver", "screening_statement": "Screened against 12 criteria; 5 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 8", "owner_name": "Cordes, H.", "date_span": "1934-06 (month)", "location": "Berlin, Germany", "transaction_state": "vermutung_der_entziehung", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "recorded in transaction_state", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "rebuttable presumption — persecuted-person transfer before 15 Sept 1935"}, "presumption_tier": "ordinary", "llm_explanation": null}, {"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 9", "owner_name": "Auktionshaus Steinbach", "date_span": "1935–1936 (year)", "location": "Berlin, Germany", "transaction_state": "unknown", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range straddles 1935-09-15 (Nuremberg Laws); the heightened tier is reported because the transfer may fall on or after it", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "unknown"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-004", "rule_statement": "Unverified: how did this object reach the institution? It is recorded as 'silver', a class that moved through confiscation channels leaving no ownership chain, and this record falls inside the screening band. The record contains no evidence either way about the channel it passed through.", "methodology": "Object-class channel rule. Objects in these classes moved through confiscation channels that produced no ownership chain — forced surrender to municipal pawn offices under the 1939 precious-metals decree, and property-stripping via the tax authorities under the 1941 11th Decree to the Reich Citizenship Law. Screening them on chain evidence under-flags them to near zero, so this rule triggers on class and date alone.", "cited_fields": {"source_ref": "example_input.csv:row 8", "owner_name": "Cordes, H.", "date_span": "1934-06 (month)", "location": "Berlin, Germany", "transaction_state": "vermutung_der_entziehung", "object_class": "silver", "object_class_rule_group": "silver", "screening_band": "1933-01-30 to 1955-12-31", "basis": "class and date alone; this rule deliberately does not require chain evidence or a location match", "overlap_certainty": "certain", "presumption_tier_basis": "recorded in transaction_state (territory: Germany (Altreich))"}, "presumption_tier": "ordinary", "llm_explanation": null}, {"rule_id": "PC-004", "rule_statement": "Unverified: how did this object reach the institution? It is recorded as 'silver', a class that moved through confiscation channels leaving no ownership chain, and this record falls inside the screening band. The record contains no evidence either way about the channel it passed through.", "methodology": "Object-class channel rule. Objects in these classes moved through confiscation channels that produced no ownership chain — forced surrender to municipal pawn offices under the 1939 precious-metals decree, and property-stripping via the tax authorities under the 1941 11th Decree to the Reich Citizenship Law. Screening them on chain evidence under-flags them to near zero, so this rule triggers on class and date alone.", "cited_fields": {"source_ref": "example_input.csv:row 9", "owner_name": "Auktionshaus Steinbach", "date_span": "1935–1936 (year)", "location": "Berlin, Germany", "transaction_state": "unknown", "object_class": "silver", "object_class_rule_group": "silver", "screening_band": "1933-01-30 to 1955-12-31", "basis": "class and date alone; this rule deliberately does not require chain evidence or a location match", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range straddles 1935-09-15 (Nuremberg Laws); the heightened tier is reported because the transfer may fall on or after it (territory: Germany (Altreich))"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [{"rule_id": "DQ-001", "rule_statement": "Unverified: what documentary source records this transaction? No `source_citation` is present. This is a records-completeness observation and says nothing about the object's persecution context.", "methodology": "Documentation-completeness axis. A missing source citation is a records-quality signal only and carries no implication about persecution context; it is reported on a separate axis for that reason.", "cited_fields": {"source_ref": "example_input.csv:row 9", "owner_name": "Auktionshaus Steinbach", "date_span": "1935–1936 (year)", "transaction_state": "unknown", "source_citation": null}, "llm_explanation": null}], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-005", "object_title": "Harbour at Dusk", "object_class": "drawing", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Austria (onset 13 March 1938, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 11", "owner_name": "Dettwiler, R.", "date_span": "1939-05-20 (exact)", "location": "Vienna, Austria", "transaction_state": "zwangsverkauf", "territory": "Austria", "persecution_window": "austria_1938", "persecution_onset": "13 March 1938", "onset_earliest": "1938-03-13", "onset_latest": "1938-03-13", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "sale under persecution"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "previously_resolved", "coverage_note": "PC-003 not evaluated for example_input.csv:row 12: the record is itself a restitution or settlement, which resolves a claim rather than presenting one for triage. PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. PC-008 skipped for example_input.csv:row 12: the record is a restitution or settlement but does not set `restitution_recipient_type`, so whether it ran to a state or to individuals cannot be determined. Chain records `restitution_erfolgt_or_vergleich` at example_input.csv:row 12: this object is marked previously resolved and is held out of the active triage queue. Flags below are retained for the record and must not be treated as reopening a settled matter. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-006", "object_title": "Study of Hands", "object_class": "drawing", "screening_statement": "Screened against 12 criteria; no criteria triggered. Absence of flags is not evidence of unproblematic provenance and does not constitute provenance research.", "persecution_context_flags": [], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-007", "object_title": "Seated Figure", "object_class": "sculpture", "screening_statement": "Screened against 12 criteria; 3 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date may overlap (the stated date precision does not settle it) the persecution window for Netherlands (onset May-June 1940, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 16", "owner_name": "Private collection", "date_span": "1940 (before)", "location": "Amsterdam, Netherlands", "transaction_state": "unknown", "territory": "Netherlands", "persecution_window": "netherlands_1940", "persecution_onset": "May-June 1940", "onset_earliest": "1940-05-01", "onset_latest": "1940-06-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table (Netherlands/Belgium/Luxembourg/France, May-June 1940). Range-level onset; no day is asserted.", "overlap_certainty": "possible", "presumption_tier_basis": "date-precision dependent: the stated precision 'before' leaves the transfer's position relative to 1935-09-15 (Nuremberg Laws) undetermined", "onset_table_version": "2026-08-09b", "onset_caveat": "the onset date for this window is itself a range in the source table; no single day is asserted", "transaction_state_gloss": "unknown"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-006", "rule_statement": "Unverified: who actually held this object at this point? The owner entry is anonymous or generic ('Private collection', matching the configured pattern 'private collection') and falls inside the 1933-1950 band. The record does not name a party.", "methodology": "Anonymous-entry rule. An anonymous or generic owner entry is unremarkable across most of a collection's history; inside the persecution band it is the standard form an interrupted ownership history takes once a name has dropped out of the record. The rule is scoped to that band for that reason.", "cited_fields": {"source_ref": "example_input.csv:row 16", "owner_name": "Private collection", "owner_name_variants": [], "date_span": "1940 (before)", "location": "Amsterdam, Netherlands", "matched_pattern": "private collection", "matched_on": "Private collection", "band": "1933-01-01 to 1950-12-31", "band_source": "Project methodology notes, Heuristic Layer rule 7 ('specifically within the 1933-1950 range').", "pattern_list_version": "2026-08-09", "overlap_certainty": "possible", "presumption_tier_basis": "date-precision dependent: the stated precision 'before' leaves the transfer's position relative to 1935-09-15 (Nuremberg Laws) undetermined"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [{"rule_id": "DQ-001", "rule_statement": "Unverified: what documentary source records this transaction? No `source_citation` is present. This is a records-completeness observation and says nothing about the object's persecution context.", "methodology": "Documentation-completeness axis. A missing source citation is a records-quality signal only and carries no implication about persecution context; it is reported on a separate axis for that reason.", "cited_fields": {"source_ref": "example_input.csv:row 16", "owner_name": "Private collection", "date_span": "1940 (before)", "transaction_state": "unknown", "source_citation": null}, "llm_explanation": null}], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-002 skipped: no record for this object sets `is_institution_acquisition`, so the institution's own accession cannot be identified in the chain. PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. DQ-002 skipped: no record sets `is_institution_acquisition`, so the acquisition date is unknown. PC-001 did not trigger, but the object's pre-1945 coverage rests only on imprecisely dated records; no record is certainly dated before 1945. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-008", "object_title": "Ornamental Casket", "object_class": "decorative art", "screening_statement": "Screened against 12 criteria; 4 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-001", "rule_statement": "Unverified: is there any documentation of ownership before 1945? No record in the supplied chain is dated, even allowing for its stated date precision, before 1 January 1945.", "methodology": "Washington Principles (1998) §§1-2 and Terezin Declaration (2009): identifying objects that carry no pre-1945 ownership documentation is the precondition for provenance research. The absence of a pre-1945 chain is a research gap, not a finding about the object.", "cited_fields": {"records_in_chain": 2, "dated_records_in_chain": 1, "recorded_dates": [{"source_ref": "example_input.csv:row 19", "date": "1954 (year)"}], "undated_records": ["example_input.csv:row 18"], "threshold": "1945-01-01"}, "presumption_tier": "n/a", "llm_explanation": null}, {"rule_id": "PC-004", "rule_statement": "Unverified: how did this object reach the institution? It is recorded as 'decorative art', a class that moved through confiscation channels leaving no ownership chain, and this record falls inside the screening band. The record contains no evidence either way about the channel it passed through.", "methodology": "Object-class channel rule. Objects in these classes moved through confiscation channels that produced no ownership chain — forced surrender to municipal pawn offices under the 1939 precious-metals decree, and property-stripping via the tax authorities under the 1941 11th Decree to the Reich Citizenship Law. Screening them on chain evidence under-flags them to near zero, so this rule triggers on class and date alone.", "cited_fields": {"source_ref": "example_input.csv:row 19", "owner_name": "Municipal Art Collection", "date_span": "1954 (year)", "location": "Bern, Switzerland", "transaction_state": "purchase", "object_class": "decorative art", "object_class_rule_group": "decorative art", "screening_band": "1933-01-30 to 1955-12-31", "basis": "class and date alone; this rule deliberately does not require chain evidence or a location match", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold; no territory matched `location`, so the tier follows the Nuremberg threshold rather than a territory window"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-004", "rule_statement": "Unverified: what was this object's history before 1945? It is recorded as 'decorative art', a class for which an absent chain is the expected trace of a confiscation channel rather than a neutral records gap. No record in the chain is certainly dated before 1945.", "methodology": "Object-class channel rule. Objects in these classes moved through confiscation channels that produced no ownership chain — forced surrender to municipal pawn offices under the 1939 precious-metals decree, and property-stripping via the tax authorities under the 1941 11th Decree to the Reich Citizenship Law. Screening them on chain evidence under-flags them to near zero, so this rule triggers on class and date alone.", "cited_fields": {"object_class": "decorative art", "object_class_rule_group": "decorative art", "screening_band": "1933-01-30 to 1955-12-31", "basis": "class and date alone; this rule deliberately does not require chain evidence or a location match", "records_in_chain": 2, "certainly_dated_before_1945": false}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [{"rule_id": "DQ-001", "rule_statement": "Unverified: what documentary source records this transaction? No `source_citation` is present. This is a records-completeness observation and says nothing about the object's persecution context.", "methodology": "Documentation-completeness axis. A missing source citation is a records-quality signal only and carries no implication about persecution context; it is reported on a separate axis for that reason.", "cited_fields": {"source_ref": "example_input.csv:row 18", "owner_name": "unknown", "date_span": null, "transaction_state": "unknown", "source_citation": null}, "llm_explanation": null}], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-002 skipped: the institution's accession is the earliest *dated* record, but undated record(s) (example_input.csv:row 18) may precede it, so chain order is not established. PC-006 not evaluated for example_input.csv:row 18: the owner entry is anonymous but the record carries no date, and the rule is scoped to 1933-1950. PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. Undated records in chain (example_input.csv:row 18): all date-based criteria were skipped for these records. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-009", "object_title": "Panel with Saints", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 2 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Italy (onset 1938 (racial laws), running to 1943-08-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 20", "owner_name": "Ferrini, L.", "date_span": "1940 (year)", "location": "Rome, Italy", "transaction_state": "unknown", "territory": "Italy", "persecution_window": "italy_racial_laws_1938", "persecution_onset": "1938 (racial laws)", "onset_earliest": "1938-01-01", "onset_latest": "1938-12-31", "window_ends": "1943-08-31", "onset_table_source": "Project methodology notes, persecution-onset table ('Sep 1943 (racial laws from 1938)'). Year-level onset; no month or day is asserted.", "onset_table_note": "Modelled as two windows because the Nuremberg threshold does not describe Italy's chronology. The 1938 racial laws (leggi razziali) began civil and property restriction; the September 1943 occupation is where persecution escalates to deportation-level. Applying the global 15 Sept 1935 threshold would report every 1938-1943 Italian transfer at the heightened tier, which overstates what the 1938 laws support; omitting the 1938 window entirely would under-flag that period, which is the more dangerous error. This split is an implementation-time modelling decision and needs confirmation by a provenance researcher or an admitted lawyer.", "overlap_certainty": "certain", "presumption_tier_basis": "the tier is set explicitly for this window: the 1938 racial laws established civil and property restriction, and the Nuremberg threshold does not govern the Italian chronology", "onset_table_version": "2026-08-09b", "onset_caveat": "the onset date for this window is itself a range in the source table; no single day is asserted", "transaction_state_gloss": "unknown"}, "presumption_tier": "ordinary", "llm_explanation": null}, {"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Italy (onset September 1943, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 21", "owner_name": "Auktionshaus Steinbach", "date_span": "1944-02-11 (exact)", "location": "Rome, Italy", "transaction_state": "zwangsverkauf", "territory": "Italy", "persecution_window": "italy_occupation_1943", "persecution_onset": "September 1943", "onset_earliest": "1943-09-01", "onset_latest": "1943-09-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table. Month-level onset; no day is asserted.", "onset_table_note": "Modelled as two windows because the Nuremberg threshold does not describe Italy's chronology. The 1938 racial laws (leggi razziali) began civil and property restriction; the September 1943 occupation is where persecution escalates to deportation-level. Applying the global 15 Sept 1935 threshold would report every 1938-1943 Italian transfer at the heightened tier, which overstates what the 1938 laws support; omitting the 1938 window entirely would under-flag that period, which is the more dangerous error. This split is an implementation-time modelling decision and needs confirmation by a provenance researcher or an admitted lawyer.", "overlap_certainty": "certain", "presumption_tier_basis": "the tier is set explicitly for this window: September 1943 is the escalation point recorded in the source table for this territory", "onset_table_version": "2026-08-09b", "onset_caveat": "the onset date for this window is itself a range in the source table; no single day is asserted", "transaction_state_gloss": "sale under persecution"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-010", "object_title": "Two Studies of a Horse", "object_class": "drawing", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 23", "owner_name": "Halvorsen, E.", "date_span": "1933-06 (month)", "location": "Berlin, Germany", "transaction_state": "vermutung_der_entziehung", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "recorded in transaction_state", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "rebuttable presumption — persecuted-person transfer before 15 Sept 1935"}, "presumption_tier": "ordinary", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-011", "object_title": "Coastal Sketch", "object_class": "drawing", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [], "documentation_quality_flags": [{"rule_id": "DQ-001", "rule_statement": "Unverified: what documentary source records this transaction? No `source_citation` is present. This is a records-completeness observation and says nothing about the object's persecution context.", "methodology": "Documentation-completeness axis. A missing source citation is a records-quality signal only and carries no implication about persecution context; it is reported on a separate axis for that reason.", "cited_fields": {"source_ref": "example_input.csv:row 25", "owner_name": "Vestergaard, K.", "date_span": "1875 (year)", "transaction_state": "purchase", "source_citation": null}, "llm_explanation": null}], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-012", "object_title": "Woman Reading", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-007", "rule_statement": "Unverified: why is an owner named in a pre-1933 published entry (Lindqvist, A.) absent from the post-1950 published entry for the same object? The record establishes that a name was once published and is no longer carried; it does not establish why.", "methodology": "Deleted-owner rule. An owner named in a pre-1933 published catalogue who is absent from a post-1950 entry for the same object is stronger evidence than a merely missing owner, because the earlier record establishes that a name was once held and published.", "cited_fields": {"pre_1933_catalogue_entries": [{"source_ref": "example_input.csv:row 27", "owner_name": "Lindqvist, A.", "catalogue_reference": "Catalogue raisonne, 1928 edn, no. 214", "date": "1928 (year)"}], "post_1950_catalogue_entries_without_owner": [{"source_ref": "example_input.csv:row 28", "catalogue_reference": "Revised catalogue raisonne, 1961 edn, no. 198", "date": "1961 (year)", "owner_stated_in_catalogue": false}], "comparison_thresholds": "published before 1933-01-01, compared against an entry after 1950-12-31"}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-013", "object_title": "Bowl with Grapes", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-007", "rule_statement": "Unverifiable, requires catalogue raisonné cross-check: an owner is named in a pre-1933 published entry for this object, but the records supplied contain no post-1950 published entry to compare against. Whether the name was later dropped cannot be determined here.", "methodology": "Deleted-owner rule. An owner named in a pre-1933 published catalogue who is absent from a post-1950 entry for the same object is stronger evidence than a merely missing owner, because the earlier record establishes that a name was once held and published.", "cited_fields": {"pre_1933_catalogue_entries": [{"source_ref": "example_input.csv:row 30", "owner_name": "Ostergaard, P.", "catalogue_reference": "Catalogue raisonne, 1930 edn, no. 77", "date": "1930 (year)"}], "post_1950_catalogue_entry_present": false, "comparison_thresholds": "published before 1933-01-01, compared against an entry after 1950-12-31"}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-014", "object_title": "Head of a Youth", "object_class": "sculpture", "screening_statement": "Screened against 12 criteria; 2 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Austria (onset 13 March 1938, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 33", "owner_name": "Rasmussen, T.", "date_span": "1938-09-14 (exact)", "location": "Vienna, Austria", "transaction_state": "zwangsverkauf", "territory": "Austria", "persecution_window": "austria_1938", "persecution_onset": "13 March 1938", "onset_earliest": "1938-03-13", "onset_latest": "1938-03-13", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "sale under persecution"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-008", "rule_statement": "Unverified: did the dispossessed individuals or their heirs ever receive this object or its value? The settlement is recorded as made to a state or institution. External restitution to a state frequently succeeded where internal restitution to the family did not; the record does not show what followed.", "methodology": "Restitution-recipient distinction. External restitution to a state frequently succeeded where internal restitution to the dispossessed family did not, so a settlement recorded to a state or institution leaves open whether the individuals or heirs ever received anything.", "cited_fields": {"source_ref": "example_input.csv:row 34", "owner_name": "Republic of Austria", "date_span": "1950-06-01 (exact)", "location": "Vienna, Austria", "transaction_state": "restitution_erfolgt_or_vergleich", "restitution_recipient_type": "state_or_institution"}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "previously_resolved", "coverage_note": "PC-003 not evaluated for example_input.csv:row 34: the record is itself a restitution or settlement, which resolves a claim rather than presenting one for triage. PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. Chain records `restitution_erfolgt_or_vergleich` at example_input.csv:row 34: this object is marked previously resolved and is held out of the active triage queue. Flags below are retained for the record and must not be treated as reopening a settled matter. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-015", "object_title": "Winter Field", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 36", "owner_name": "Aaltonen, S.", "date_span": "1939 (year)", "location": "Berlin, Germany", "transaction_state": "zwangsverkauf", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "sale under persecution"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "previously_resolved", "coverage_note": "PC-002 skipped: no record for this object sets `is_institution_acquisition`, so the institution's own accession cannot be identified in the chain. PC-003 not evaluated for example_input.csv:row 37: the record is itself a restitution or settlement, which resolves a claim rather than presenting one for triage. PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. DQ-002 skipped: no record sets `is_institution_acquisition`, so the acquisition date is unknown. Chain records `restitution_erfolgt_or_vergleich` at example_input.csv:row 37: this object is marked previously resolved and is held out of the active triage queue. Flags below are retained for the record and must not be treated as reopening a settled matter. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-016", "object_title": "Riverbank", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 2 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 38", "owner_name": "Neumann, G.", "date_span": "1936 (year)", "location": "Berlin, Germany", "transaction_state": "purchase", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "purchase"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-009", "rule_statement": "Unverified: under what authority did this object cross a border? The chain moves from Germany to Switzerland on a record dated inside 1933-1945, and no export licence is recorded.", "methodology": "Export-licence rule. A cross-border movement dated 1933-1945 without a recorded export licence leaves the lawfulness of the movement unevidenced in the record supplied.", "cited_fields": {"source_ref": "example_input.csv:row 39", "owner_name": "Galerie Nordwind", "date_span": "1939 (year)", "location": "Basel, Switzerland", "transaction_state": "unknown", "export_licence_present": null, "moved_from": "Berlin, Germany", "moved_from_source_ref": "example_input.csv:row 38", "origin_country": "Germany", "destination_country": "Switzerland", "country_derivation": "country taken as the final comma-separated component of `location`; where the value carries no comma the whole value is used", "window": "1933-01-01 to 1945-12-31", "overlap_certainty": "certain", "export_licence_state": "not recorded either way", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-017", "object_title": "Orchard Path", "object_class": null, "screening_statement": "Screened against 12 criteria; no criteria triggered. Absence of flags is not evidence of unproblematic provenance and does not constitute provenance research.", "persecution_context_flags": [], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-004 skipped: no `object_class` recorded, so the object-class channel rule could not be evaluated. PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-018", "object_title": "Standing Figure", "object_class": "sculpture", "screening_statement": "Screened against 12 criteria; 3 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-001", "rule_statement": "Unverified: is there any documentation of ownership before 1945? No record in the supplied chain is dated, even allowing for its stated date precision, before 1 January 1945.", "methodology": "Washington Principles (1998) §§1-2 and Terezin Declaration (2009): identifying objects that carry no pre-1945 ownership documentation is the precondition for provenance research. The absence of a pre-1945 chain is a research gap, not a finding about the object.", "cited_fields": {"records_in_chain": 1, "dated_records_in_chain": 1, "recorded_dates": [{"source_ref": "example_input.csv:row 44", "date": "2005 (year)"}], "undated_records": [], "threshold": "1945-01-01"}, "presumption_tier": "n/a", "llm_explanation": null}, {"rule_id": "PC-002", "rule_statement": "Unverified: who held this object before the institution acquired it? The earliest record in the supplied chain is the institution's own acquisition, and no prior owner is recorded.", "methodology": "Washington Principles (1998) §§1-2: a chain whose earliest entry is the institution's own accession documents the institution's holding, not the object's history before it.", "cited_fields": {"source_ref": "example_input.csv:row 44", "owner_name": "Municipal Art Collection", "date_span": "2005 (year)", "transaction_state": "purchase", "is_institution_acquisition": true, "records_earlier_in_chain": 0, "records_in_chain": 1}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [{"rule_id": "DQ-002", "rule_statement": "Unverified: what pre-1945 provenance was established before this object was acquired? The institution acquired it after the commitment date applied (1998-12-03), and no record in the chain is certainly dated before 1945. This concerns the acquisition process, not the object's own history.", "methodology": "Institutional acquisition practice measured against the institution's own stated standard (Washington Principles, 1998). This concerns how the institution acquired the object, not the object's own history, and is reported on the documentation axis for that reason — it asserts nothing about persecution context.", "cited_fields": {"source_ref": "example_input.csv:row 44", "owner_name": "Municipal Art Collection", "date_span": "2005 (year)", "transaction_state": "purchase", "commitment_date_applied": "1998-12-03", "commitment_date_source": "Washington Conference Principles on Nazi-Confiscated Art, released 3 December 1998 — the default where the institution has not recorded its own commitment date. An institution that adopted the Principles on a different date should configure that date instead.", "commitment_date_is_default": true, "certainly_dated_before_1945": false, "records_in_chain": 1}, "llm_explanation": null}], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-019", "object_title": "Harbour Wall", "object_class": "painting", "screening_statement": "Screened against 12 criteria; no criteria triggered. Absence of flags is not evidence of unproblematic provenance and does not constitute provenance research.", "persecution_context_flags": [], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-020", "object_title": "Still Life with Pears", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 1 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-005", "rule_statement": "Recorded for context, not as a persecution indicator: a party to this transaction matches the confiscation-channel entry for Galerie Fischer (Lucerne). On the documented basis cited below, this match does NOT indicate persecution of an individual former owner, and nothing in this record independently suggests it. The open question is what the cited basis covers, not who this object was taken from.", "methodology": "Confiscation-channel actor list (bundled, each entry carrying its own documented basis and sources). A match is a citation to that documented basis and carries no finding about this transaction. Where the matched basis does not itself bear on persecution of a private former owner, the flag says so rather than implying otherwise.", "cited_fields": {"source_ref": "example_input.csv:row 47", "owner_name": "Galerie Fischer Lucerne", "date_span": "1941 (year)", "location": "Lucerne, Switzerland", "transaction_state": "purchase", "matched_on": "Galerie Fischer Lucerne", "actor_entry": "Galerie Fischer (Lucerne)", "documented_bases": [{"documented_basis": "IMPORTANT DISTINCTION — do not conflate: the 30 June 1939 sale at the Grand Hotel National specifically auctioned 'Degenerate Art' confiscated by the Nazi state from GERMAN STATE MUSEUMS (not privately-owned Jewish collections) — a different legal category from persecuted-individual forced sales.", "sources": ["https://en.wikipedia.org/wiki/Degenerate_Art_auction", "https://pilot-demo.jdcrp.org/event/1939-06-30-fischer-auction/"], "implies_persecution_of_former_owner": false, "gate_basis": "FALSE per the entry's own words: the works auctioned were confiscated from GERMAN STATE MUSEUMS, not privately-owned collections, which the entry itself calls 'a different legal category from persecuted-individual forced sales'.", "basis_period": "30 June 1939 auction, Grand Hotel National, Lucerne"}, {"documented_basis": "Separately, Wikipedia's biography of Theodor Fischer states he 'played a key part in the trading of art looted by the Germans from occupied countries' during the broader war period — this is a distinct claim about private/looted (not state 'degenerate art') property and needs its own case-level verification, not assumed from the 1939 sale alone.", "sources": ["https://en.wikipedia.org/wiki/Theodor_Fischer_(auctioneer)"], "implies_persecution_of_former_owner": false, "gate_basis": "FALSE per the entry's own words: this limb 'needs its own case-level verification, not assumed from the 1939 sale alone'. It is single-sourced and cannot carry an inference about any specific object's former owner.", "basis_period": "broader wartime period"}], "actor_location": "Lucerne, Switzerland", "actor_active_period": "Specifically flagged: 30 June 1939 auction. Broader wartime activity separately documented.", "verification_note": "The 30 June 1939 date/venue/category is very strongly corroborated (5+ independent sources). The broader wartime looted-art-trading claim is single-sourced (Wikipedia) — verify independently before relying on it for anything beyond the 1939 state-museum sale specifically.", "actor_window": "1938-01-01 to 1945-12-31", "overlap_certainty": "certain", "citation_disclaimer": "This indicates only that the name matches an entry in the bundled confiscation-channel actor list. It carries no finding as to this transaction, and no characterization of the named business or person.", "persecution_inference_basis": "the matched entry's documented basis does not bear on persecution of a private former owner, and this record's transaction_state does not independently establish it", "presumption_tier_basis": "not asserted — see persecution_inference_basis"}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-021", "object_title": "Portrait of a Notary", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 2 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 49", "owner_name": "Kunsthaus Lempertz", "date_span": "1942 (year)", "location": "Cologne, Germany", "transaction_state": "purchase", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "purchase"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-005", "rule_statement": "Unverified: what were the circumstances of this transaction? A party to it matches the confiscation-channel entry for Lempertz (Cologne), whose documented basis is set out in the cited fields. The match cites that record and makes no finding about this transaction.", "methodology": "Confiscation-channel actor list (bundled, each entry carrying its own documented basis and sources). A match is a citation to that documented basis and carries no finding about this transaction. Where the matched basis does not itself bear on persecution of a private former owner, the flag says so rather than implying otherwise.", "cited_fields": {"source_ref": "example_input.csv:row 49", "owner_name": "Kunsthaus Lempertz", "date_span": "1942 (year)", "location": "Cologne, Germany", "transaction_state": "purchase", "matched_on": "Kunsthaus Lempertz", "actor_entry": "Lempertz (Cologne)", "documented_bases": [{"documented_basis": "Listed by the ALIU as a Red Flag Name in 1946. Documented case: Nazis forced dealer Max Stern to consign several hundred works from his family's Düsseldorf gallery to Lempertz for a Nazi-sanctioned forced sale (Dec 1939), including a 1632 Dutch portrait later subject to restitution research (Wikidata-documented). Still an operating auction house — this entry is about specific historical transactions, not a characterization of the current business.", "sources": ["https://www.wikidata.org/wiki/Q1272748", "https://www.openartdata.org/2025/10/holocaust-art-research-digital-tools.html"], "implies_persecution_of_former_owner": true, "gate_basis": "TRUE per the entry's own words: the entry's own basis states 'Nazis forced dealer Max Stern to consign several hundred works ... for a Nazi-sanctioned forced sale'.", "basis_period": "1933-1945, still operating today"}], "actor_location": "Cologne, Germany", "actor_active_period": "1933-1945, still operating today", "verification_note": "ALIU listing and Max Stern case both independently corroborated. Note explicitly that mere name-mention in a provenance record is not itself evidence — cited source explicitly warns of this.", "actor_window": "1938-01-01 to 1945-12-31", "overlap_certainty": "certain", "citation_disclaimer": "This indicates only that the name matches an entry in the bundled confiscation-channel actor list. It carries no finding as to this transaction, and no characterization of the named business or person.", "persecution_inference_basis": "a documented basis on the matched entry bears on persecution of a former owner", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-022", "object_title": "Silver Ewer", "object_class": "silver", "screening_statement": "Screened against 12 criteria; 3 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Austria (onset 13 March 1938, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 51", "owner_name": "Dorotheum", "date_span": "1943 (year)", "location": "Vienna, Austria", "transaction_state": "purchase", "territory": "Austria", "persecution_window": "austria_1938", "persecution_onset": "13 March 1938", "onset_earliest": "1938-03-13", "onset_latest": "1938-03-13", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "purchase"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-004", "rule_statement": "Unverified: how did this object reach the institution? It is recorded as 'silver', a class that moved through confiscation channels leaving no ownership chain, and this record falls inside the screening band. The record contains no evidence either way about the channel it passed through.", "methodology": "Object-class channel rule. Objects in these classes moved through confiscation channels that produced no ownership chain — forced surrender to municipal pawn offices under the 1939 precious-metals decree, and property-stripping via the tax authorities under the 1941 11th Decree to the Reich Citizenship Law. Screening them on chain evidence under-flags them to near zero, so this rule triggers on class and date alone.", "cited_fields": {"source_ref": "example_input.csv:row 51", "owner_name": "Dorotheum", "date_span": "1943 (year)", "location": "Vienna, Austria", "transaction_state": "purchase", "object_class": "silver", "object_class_rule_group": "silver", "screening_band": "1933-01-30 to 1955-12-31", "basis": "class and date alone; this rule deliberately does not require chain evidence or a location match", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold (territory: Austria)"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "PC-005", "rule_statement": "Unverified: what were the circumstances of this transaction? A party to it matches the confiscation-channel entry for Dorotheum (Vienna), whose documented basis is set out in the cited fields. The match cites that record and makes no finding about this transaction.", "methodology": "Confiscation-channel actor list (bundled, each entry carrying its own documented basis and sources). A match is a citation to that documented basis and carries no finding about this transaction. Where the matched basis does not itself bear on persecution of a private former owner, the flag says so rather than implying otherwise.", "cited_fields": {"source_ref": "example_input.csv:row 51", "owner_name": "Dorotheum", "date_span": "1943 (year)", "location": "Vienna, Austria", "transaction_state": "purchase", "matched_on": "Dorotheum", "actor_entry": "Dorotheum (Vienna)", "documented_bases": [{"documented_basis": "Documented as a co-venue (with Weinmüller in Munich) for auctioning cultural assets seized from Jews and other Nazi-designated 'enemies of the state' at Gestapo headquarters, Prague, per a June 1941 inspection commission.", "sources": ["https://justapedia.org/wiki/Adolf_Weinm%C3%BCller", "https://pilot-demo.jdcrp.org/people/weinmuller_adolf-/"], "implies_persecution_of_former_owner": true, "gate_basis": "TRUE per the entry's own words: the entry's own basis states the venue auctioned 'cultural assets seized from Jews and other Nazi-designated ‘enemies of the state’'.", "basis_period": "1938-1945, still operating today"}], "actor_location": "Vienna, Austria", "actor_active_period": "1938-1945, still operating today", "verification_note": "WEAKER SOURCING than the other entries — corroborated only via the Weinmüller research (two sources, both discussing Dorotheum as a secondary detail, not a dedicated Dorotheum-focused source). Get a dedicated citation before treating as fully verified.", "actor_window": "1938-01-01 to 1945-12-31", "overlap_certainty": "certain", "citation_disclaimer": "This indicates only that the name matches an entry in the bundled confiscation-channel actor list. It carries no finding as to this transaction, and no characterization of the named business or person.", "persecution_inference_basis": "a documented basis on the matched entry bears on persecution of a former owner", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold"}, "presumption_tier": "heightened", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-023", "object_title": "Landscape with Mill", "object_class": "painting", "screening_statement": "Screened against 12 criteria; 2 triggered. A triggered criterion is a question for a human researcher, not a finding about this object.", "persecution_context_flags": [{"rule_id": "PC-003", "rule_statement": "Unverified: was this transfer made by a persecuted person, and if so was fair value received and the transferor free to dispose of the proceeds? The transfer's recorded date overlaps the persecution window for Germany (Altreich) (onset 30 January 1933, running to 1955-12-31). The record contains no evidence either way on those questions.", "methodology": "REAO (Rückerstattungsanordnung) Art. 3 presumption of a persecution-related loss; the presumption is heightened (verschärfte Vermutung) for transfers on or after 15 September 1935 (Nuremberg Laws). Territory onset dates: see the cited persecution-onset table entry.", "cited_fields": {"source_ref": "example_input.csv:row 53", "owner_name": "Haberstock, Karl", "date_span": "1940 (year)", "location": "Berlin, Germany", "transaction_state": "purchase", "territory": "Germany (Altreich)", "persecution_window": "germany_altreich_1933", "persecution_onset": "30 January 1933", "onset_earliest": "1933-01-30", "onset_latest": "1933-01-30", "window_ends": "1955-12-31", "onset_table_source": "Project methodology notes, persecution-onset table.", "overlap_certainty": "certain", "presumption_tier_basis": "the recorded date range lies wholly on or after the threshold", "onset_table_version": "2026-08-09b", "transaction_state_gloss": "purchase"}, "presumption_tier": "heightened", "llm_explanation": null}, {"rule_id": "NM-001", "rule_statement": "Name matches the ALIU Red Flag Names List entry for Haberstock, Karl; see the cited source and the list's own annotation, quoted in full below. This indicates only that the name appears in a 1946 Allied investigative record. It carries no finding as to any specific transaction, and no characterization of the named person. Unverified: what, if anything, connects this named party to this object's history?", "methodology": "ALIU Red Flag Names List (Office of Strategic Services Art Looting Investigation Unit, 1946), a public government-produced investigative record. Matching against it is standard field practice. A match is a citation to that record and is not a characterization of any person.", "cited_fields": {"source_ref": "example_input.csv:row 53", "owner_name": "Haberstock, Karl", "owner_name_variants": ["Karl Haberstock"], "date_span": "1940 (year)", "matched_on": "Haberstock, Karl", "aliu_entry_name": "Haberstock, Karl", "aliu_entry_type": "documented_concern", "aliu_annotation": "Berlin, Kurfürstenstrasse 59, Nuremberg. The leading Nazi art dealer. Involved from 1933-39 in the campaign against 'degenerate' art and sold such paintings at great profit outside of Germany. Became Hitler's dealer in 1936 and was directly responsible for the appointment of Posse to the directorship of Linz. The most prolific German buyer in Paris during the war and regarded in all quarters as the most important German art figure. In custody, US Chief of Counsel, Nuremberg.", "source_url": "https://www.lootedart.com/MVI3RM469661", "cross_referenced_sources": ["https://www.wikidata.org/wiki/Q1731388", "https://en.wikipedia.org/wiki/Karl_Haberstock"], "verification_note": "Text corroborated across lootedart.com, openartdata.org, and Wikidata independently; consistent across all three.", "citation_disclaimer": "This indicates only that the name appears in a 1946 Allied investigative record. It carries no finding as to any specific transaction, and no characterization of the named person.", "critical_scholarly_context": "The list is under active critical reassessment — see University of Bonn KHI project 'Under suspicion: a critical analysis of the Red Flag Names List of 1945/46' (https://www.khi.uni-bonn.de/fpk/en/news-1/unter-verdacht-eine-kritische-untersuchung-der-red-flag-names-liste-von-1945-46). Presence on this list is a 1946 investigative note, not a legal finding — some entries explicitly exonerate the named individual (see Metternich entry below). Every match rendered by this tool must include the entry's original annotation, never a bare 'flagged' label."}, "presumption_tier": "n/a", "llm_explanation": null}], "documentation_quality_flags": [], "name_list_citations": [], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}, {"object_id": "OBJ-024", "object_title": "Drawing of a Cloister", "object_class": "drawing", "screening_statement": "Screened against 12 criteria; no criteria triggered. Absence of flags is not evidence of unproblematic provenance and does not constitute provenance research.", "persecution_context_flags": [], "documentation_quality_flags": [], "name_list_citations": [{"rule_id": "NM-002", "rule_statement": "Name matches the ALIU Red Flag Names List entry for Wolff Metternich, Franz, which is an EXONERATING entry: the list's own annotation records this name in terms that do not raise a concern. Read that annotation, quoted in full below, rather than the fact of the match. This is context only — it is not a flag, it does not place this object in the work queue, and it must not be read or reported as an unexamined concern.", "methodology": "ALIU Red Flag Names List, exonerating entry. Recorded as context so that the appearance of the name is not later mistaken for an unexamined concern. This is not a flag and does not place the object in the queue.", "cited_fields": {"source_ref": "example_input.csv:row 55", "owner_name": "Wolff Metternich, Franz", "owner_name_variants": ["Graf Wolff-Metternich"], "date_span": "1942 (year)", "matched_on": "Wolff Metternich, Franz", "aliu_entry_name": "Wolff Metternich, Franz", "aliu_entry_type": "exonerating", "aliu_annotation": "Bonn, Blücherstrasse 2. Appointed in May 1940 by the German High Command as Director of Kunstschutz for France. In 1942, placed in charge of all Kunstschutz activities in France, the Netherlands, the Balkans and Italy. Universally regarded as having acted at all times with complete integrity, and as having shown the greatest sense of responsibility for the preservation of works of art.", "source_url": "https://www.openartdata.org/p/red-flag-names-from-art-looting.html", "verification_note": "Included specifically as a worked example of why name-matching must render the original annotation, not a bare flag — this individual is documented as having actively protected art, not looted it, despite appearing in the same historical index. Single primary source found so far; corroborates well against general historical record of Wolff-Metternich's role, but get a second citation before production use.", "citation_disclaimer": "This indicates only that the name appears in a 1946 Allied investigative record. It carries no finding as to any specific transaction, and no characterization of the named person.", "critical_scholarly_context": "The list is under active critical reassessment — see University of Bonn KHI project 'Under suspicion: a critical analysis of the Red Flag Names List of 1945/46' (https://www.khi.uni-bonn.de/fpk/en/news-1/unter-verdacht-eine-kritische-untersuchung-der-red-flag-names-liste-von-1945-46). Presence on this list is a 1946 investigative note, not a legal finding — some entries explicitly exonerate the named individual (see Metternich entry below). Every match rendered by this tool must include the entry's original annotation, never a bare 'flagged' label."}, "entry_type": "exonerating", "llm_explanation": null}], "resolved_status": "unresolved", "coverage_note": "PC-007 skipped: no record carries a `catalogue_reference`, so there is no published entry to compare across time. NM-001 ran against a list that declares itself incomplete (SEED — INCOMPLETE, NOT FOR PRODUCTION USE; 3 entries loaded). The absence of a name match is NOT evidence that a name is absent from the full ALIU Red Flag Names List. PC-005 ran against a list that declares itself non-exhaustive (SEED — VERIFIED ENTRIES ONLY, NOT EXHAUSTIVE; 6 entries loaded). The absence of an actor match is NOT evidence that no confiscation-channel actor was involved. Criteria evaluated: PC-001, PC-002, PC-003, PC-004, PC-005, PC-006, PC-007, PC-008, PC-009, NM-001, DQ-001, DQ-002."}]}</script>
+<script>
+(function () {
+  "use strict";
+  var DATA = JSON.parse(document.getElementById("triage-data").textContent);
+
+  // Display-only grouping. Deliberately not written back into the JSON
+  // output: a stored per-object band would be the graded record the
+  // methodology says not to create.
+  var BANDS = [
+    { id: "heightened", label: "Heightened presumption tier engaged",
+      desc: "A transfer overlaps a persecution window at the heightened tier. The record does not establish that the transferor was persecuted, nor what was received." },
+    { id: "ordinary", label: "Ordinary presumption tier engaged",
+      desc: "A transfer overlaps a persecution window at the ordinary tier." },
+    { id: "namelist", label: "Reference-list match recorded",
+      desc: "A party matches a bundled reference list. A match is a citation to that record and carries no finding about this transaction or about any person. Read the cited basis before acting on it." },
+    { id: "settlement", label: "Settlement recorded to a state",
+      desc: "A restitution or settlement is recorded as made to a state or institution rather than to named individuals or heirs. Whether the dispossessed family ever received anything is a separate question the record does not answer. These objects are marked previously resolved but are shown here rather than held out, because that is the question this criterion exists to ask." },
+    { id: "coverage", label: "Coverage gaps",
+      desc: "No pre-1945 provenance recorded, the chain begins at the institution's own accession, an object class that moved through chainless channels, or an owner named pre-1933 who is absent later. Nothing is known about the relevant period either way." },
+    { id: "documentation", label: "Documentation-quality observations only",
+      desc: "A records-completeness matter, including acquisition practice measured against the institution's own commitment date. This says nothing about persecution context." },
+    { id: "none", label: "No criteria triggered",
+      desc: "Screened, not cleared. Listed so the queue accounts for every object supplied." }
+  ];
+
+  var NAME_LIST_RULES = { "NM-001": true, "PC-005": true };
+  var SETTLEMENT_RULES = { "PC-008": true };
+
+  function bandOf(obj) {
+    var pc = obj.persecution_context_flags || [];
+    var dq = obj.documentation_quality_flags || [];
+    if (pc.some(function (f) { return f.presumption_tier === "heightened"; })) return "heightened";
+    if (pc.some(function (f) { return f.presumption_tier === "ordinary"; })) return "ordinary";
+    if (pc.some(function (f) { return NAME_LIST_RULES[f.rule_id]; })) return "namelist";
+    if (pc.some(function (f) { return SETTLEMENT_RULES[f.rule_id]; })) return "settlement";
+    if (pc.length) return "coverage";
+    if (dq.length) return "documentation";
+    return "none";
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+
+  // ---- header -----------------------------------------------------------
+  var meta = document.getElementById("meta");
+  [["Input", DATA.input_file], ["Format", DATA.input_format],
+   ["Generated", DATA.generated_at],
+   ["Onset table", DATA.onset_table_version],
+   ["Explanations", (DATA.llm_layer || {}).enabled
+      ? "machine-generated (" + (DATA.llm_layer.output_language || "?") + ")"
+      : "none generated"]].forEach(function (pair) {
+    if (pair[1]) meta.appendChild(el("span", null, pair[0] + ": " + pair[1]));
+  });
+
+  var disc = document.getElementById("disclaimer");
+  disc.appendChild(el("strong", null, "This is machine-generated triage, not provenance research."));
+  disc.appendChild(el("span", null, DATA.disclaimer));
+
+  // A lossy conversion governs how the whole report reads, so it is stated
+  // above the coverage map rather than left in the JSON for nobody to find.
+  var ingest = DATA.ingest_notes || [];
+  if (ingest.length) {
+    document.getElementById("ingest-block").hidden = false;
+    var il = document.getElementById("ingest-notes");
+    ingest.forEach(function (note) {
+      var li = el("li");
+      li.appendChild(el("span", "rid", note.source_ref + " "));
+      li.appendChild(document.createTextNode(note.detail));
+      il.appendChild(li);
+    });
+  }
+
+  // ---- coverage map -----------------------------------------------------
+  var cm = DATA.coverage_map;
+  var tiles = document.getElementById("tiles");
+  [["objects_processed", "objects processed"],
+   ["with_no_pre_1945_provenance", "with no pre-1945 provenance"],
+   ["chain_begins_at_institutional_acquisition", "chains beginning at accession"],
+   ["institutional_acquisition_not_determinable", "accession not identifiable in the record"],
+   ["previously_resolved", "previously resolved"]].forEach(function (pair) {
+    var t = el("div", "tile");
+    t.appendChild(el("div", "n", cm[pair[0]]));
+    t.appendChild(el("div", "k", pair[1]));
+    tiles.appendChild(t);
+  });
+
+  var total = cm.objects_processed || 1;
+  var certain = cm.of_which_certainly_dated_pre_1945;
+  var imprecise = cm.with_any_pre_1945_provenance - certain;
+  var none = cm.with_no_pre_1945_provenance;
+  var bar = document.getElementById("bar");
+  [["seg-a", certain, "certainly dated before 1945"],
+   ["seg-b", imprecise, "pre-1945 only via imprecise dates"],
+   ["seg-c", none, "no pre-1945 provenance"]].forEach(function (seg) {
+    if (!seg[1]) return;
+    var d = el("div", seg[0], seg[1]);
+    d.style.width = (seg[1] / total * 100) + "%";
+    d.title = seg[2] + ": " + seg[1];
+    bar.appendChild(d);
+  });
+  var legend = document.getElementById("legend");
+  [["--fill-a", certain, "certainly dated before 1945"],
+   ["--fill-b", imprecise, "pre-1945 only via imprecise dates (circa / before / after)"],
+   ["--fill-c", none, "no pre-1945 provenance recorded"]].forEach(function (item) {
+    var s = el("span");
+    var sw = el("i");
+    sw.style.background = "var(" + item[0] + ")";
+    s.appendChild(sw);
+    s.appendChild(document.createTextNode(item[1] + " " + item[2]));
+    legend.appendChild(s);
+  });
+  document.getElementById("coverage-note").textContent = cm.note || "";
+
+  // ---- per-object rendering --------------------------------------------
+  // A documented basis is the whole point of a reference-list match, so it is
+  // rendered as readable structure rather than a JSON blob.
+  function renderNested(value) {
+    var wrap = el("div", "nested");
+    value.forEach(function (item) {
+      var block = el("div", "nested-item");
+      Object.keys(item).forEach(function (key) {
+        var line = el("div", "nested-line");
+        line.appendChild(el("span", "nested-key", key.replace(/_/g, " ") + ": "));
+        var inner = item[key];
+        line.appendChild(document.createTextNode(
+          Array.isArray(inner) ? inner.join("; ") : String(inner)
+        ));
+        block.appendChild(line);
+      });
+      wrap.appendChild(block);
+    });
+    return wrap;
+  }
+
+  function renderCited(cited) {
+    var table = el("table", "cited");
+    Object.keys(cited).forEach(function (key) {
+      var value = cited[key];
+      var tr = el("tr");
+      tr.appendChild(el("th", null, key));
+      var td = el("td");
+      if (value === null || value === undefined || value === "") {
+        td.textContent = "—";
+      } else if (Array.isArray(value) && value.length && typeof value[0] === "object") {
+        td.appendChild(renderNested(value));
+      } else if (Array.isArray(value)) {
+        td.textContent = value.length ? value.join("; ") : "—";
+      } else if (typeof value === "object") {
+        td.appendChild(renderNested([value]));
+      } else {
+        td.textContent = String(value);
+      }
+      tr.appendChild(td);
+      table.appendChild(tr);
+    });
+    return table;
+  }
+
+  function renderFlag(flag) {
+    var d = el("details", "flag");
+    var s = el("summary");
+    s.appendChild(el("span", "rid", flag.rule_id));
+    s.appendChild(document.createTextNode(flag.rule_statement || ""));
+    if (flag.presumption_tier) {
+      s.appendChild(el("span", "tier", "REAO tier: " + flag.presumption_tier));
+    }
+    d.appendChild(s);
+
+    var body = el("div", "flag-body");
+    body.appendChild(el("h5", null, "Cited record fields"));
+    body.appendChild(renderCited(flag.cited_fields || {}));
+    body.appendChild(el("h5", null, "Methodological basis"));
+    body.appendChild(el("p", "methodology", flag.methodology || ""));
+    // Rendered directly under the cited fields so a reader can check every
+    // generated sentence against the record without scrolling.
+    if (flag.llm_explanation) {
+      body.appendChild(el("h5", null, "Plain-language restatement"));
+      body.appendChild(el("p", "methodology", flag.llm_explanation));
+      body.appendChild(el("div", "not-a-flag",
+        "machine-generated · verified against the fields above"));
+    } else if (flag.llm_explanation_status &&
+               flag.llm_explanation_status.indexOf("generated_and_verified") !== 0) {
+      // A withheld explanation is reported, never silently absent.
+      body.appendChild(el("h5", null, "Plain-language restatement"));
+      body.appendChild(el("p", "methodology",
+        "None. " + flag.llm_explanation_status +
+        " The rule statement above is the tool's own wording and is unaffected."));
+    }
+    d.appendChild(body);
+    return d;
+  }
+
+  function renderAxis(title, flags, emptyText) {
+    var wrap = el("div", "axis");
+    wrap.appendChild(el("h4", null, title));
+    if (!flags.length) {
+      wrap.appendChild(el("p", "empty", emptyText));
+      return wrap;
+    }
+    flags.forEach(function (f) { wrap.appendChild(renderFlag(f)); });
+    return wrap;
+  }
+
+  // Exonerating name-list matches. Rendered on their own dashed panel, never
+  // as a flag: an exonerating entry records that a name was investigated and
+  // cleared, or that the person acted protectively, and showing it as a
+  // concern would invert the record's meaning.
+  function renderCitations(citations) {
+    var wrap = el("div", "citations");
+    wrap.appendChild(el("h4", null, "Name-list citations — context, not findings"));
+    wrap.appendChild(el("div", "not-a-flag", "Not a flag · does not place this object in the queue"));
+    citations.forEach(function (c) {
+      wrap.appendChild(el("p", "citation-note", c.rule_statement));
+      wrap.appendChild(renderCited(c.cited_fields || {}));
+      wrap.appendChild(el("p", "methodology", c.methodology || ""));
+    });
+    return wrap;
+  }
+
+  function renderObject(obj) {
+    var pc = obj.persecution_context_flags || [];
+    var dq = obj.documentation_quality_flags || [];
+    var citations = obj.name_list_citations || [];
+    var d = el("details", "obj");
+
+    var s = el("summary");
+    s.appendChild(el("span", "id", obj.object_id));
+    s.appendChild(el("span", "title", obj.object_title || "(untitled)"));
+    var tally = pc.length + " persecution-context · " + dq.length + " documentation";
+    s.appendChild(el("span", "tally", tally));
+    if (citations.length) {
+      s.appendChild(el("span", "cite-tag",
+        "+ " + citations.length + " exonerating citation" + (citations.length === 1 ? "" : "s")));
+    }
+    d.appendChild(s);
+
+    var body = el("div", "obj-body");
+    body.appendChild(el("p", "screening", obj.screening_statement));
+    body.appendChild(renderAxis("Persecution context", pc,
+      "No persecution-context criterion triggered. This is not a clearance."));
+    body.appendChild(renderAxis("Documentation quality", dq,
+      "No documentation-quality criterion triggered."));
+    if (citations.length) body.appendChild(renderCitations(citations));
+    if (obj.coverage_note) {
+      var cov = el("div", "coverage");
+      cov.appendChild(el("strong", null, "Which criteria ran: "));
+      cov.appendChild(document.createTextNode(obj.coverage_note));
+      body.appendChild(cov);
+    }
+    d.appendChild(body);
+    return d;
+  }
+
+  // ---- queue ------------------------------------------------------------
+  var objects = DATA.objects || [];
+  var queue = document.getElementById("queue");
+  var search = document.getElementById("search");
+  var showResolved = document.getElementById("show-resolved");
+
+  function draw() {
+    var term = search.value.trim().toLowerCase();
+    queue.textContent = "";
+
+    var visible = objects.filter(function (o) {
+      if (!term) return true;
+      return (o.object_id + " " + (o.object_title || "")).toLowerCase().indexOf(term) !== -1;
+    });
+    // A previously-resolved object is normally held out of the queue. The one
+    // exception is PC-008: that rule exists precisely to ask whether a
+    // recorded settlement reached the dispossessed family, so holding it out
+    // on the strength of the settlement it questions would make the rule
+    // unreachable. The stored resolved_status is unchanged either way.
+    function heldOut(o) {
+      if (o.resolved_status !== "previously_resolved") return false;
+      return !(o.persecution_context_flags || []).some(function (f) {
+        return SETTLEMENT_RULES[f.rule_id];
+      });
+    }
+    var active = visible.filter(function (o) { return !heldOut(o); });
+    var held = visible.filter(heldOut);
+
+    BANDS.forEach(function (band) {
+      var members = active.filter(function (o) { return bandOf(o) === band.id; });
+      if (!members.length) return;
+      var wrap = el("div", "band");
+      var head = el("div", "band-head");
+      head.appendChild(el("span", "mark mark-" + band.id));
+      head.appendChild(el("h3", null, band.label));
+      head.appendChild(el("span", "count", members.length + " object" + (members.length === 1 ? "" : "s")));
+      wrap.appendChild(head);
+      wrap.appendChild(el("p", "band-desc", band.desc));
+      members.forEach(function (o) { wrap.appendChild(renderObject(o)); });
+      queue.appendChild(wrap);
+    });
+
+    if (held.length) {
+      var hw = el("div", "band");
+      var hh = el("div", "band-head");
+      hh.appendChild(el("h3", null, "Previously resolved — held out of the queue"));
+      hh.appendChild(el("span", "count", held.length + " object" + (held.length === 1 ? "" : "s")));
+      hw.appendChild(hh);
+      hw.appendChild(el("p", "band-desc",
+        "The chain records a restitution or settlement. These are kept out of the active queue so that a closed matter is not reopened as an open one. Re-flagging a settled claim is a real cost, not a harmless false positive."));
+      if (showResolved.checked) {
+        held.forEach(function (o) { hw.appendChild(renderObject(o)); });
+      }
+      queue.appendChild(hw);
+    }
+
+    if (!visible.length) {
+      queue.appendChild(el("p", "empty", "No object matches that filter."));
+    }
+  }
+
+  search.addEventListener("input", draw);
+  showResolved.addEventListener("change", draw);
+  draw();
+
+  // ---- footer -----------------------------------------------------------
+  var crit = document.getElementById("criteria");
+  (DATA.criteria_screened || []).forEach(function (c) {
+    var li = el("li");
+    li.appendChild(el("span", "rid", c.rule_id + " "));
+    li.appendChild(document.createTextNode(c.title + " — " + c.axis.replace(/_/g, " ") + " axis"));
+    crit.appendChild(li);
+  });
+  var notRun = DATA.criteria_not_run || [];
+  if (notRun.length) {
+    document.getElementById("not-run-block").hidden = false;
+    var nr = document.getElementById("not-run");
+    notRun.forEach(function (item) {
+      var li = el("li");
+      li.appendChild(el("span", "rid", item.rule_id + " "));
+      li.appendChild(document.createTextNode(item.reason));
+      nr.appendChild(li);
+    });
+  }
+
+  var dp = DATA.date_precision_handling || {};
+  document.getElementById("precision-note").textContent =
+    "circa margin: ±" + dp.circa_margin_years + " years. " + (dp.note || "");
+
+  var cd = DATA.commitment_date || {};
+  document.getElementById("commitment-note").textContent =
+    cd.applied
+      ? (cd.applied + (cd.is_default ? " (default — the institution has not set its own)" : " (configured)") + ". " + (cd.source || ""))
+      : "not applied";
+
+  document.getElementById("table-note").textContent =
+    "Version " + DATA.onset_table_version + ". " + (DATA.onset_table_review_status || "");
+
+  // Whether any sentence in this report was machine-generated has to be
+  // answerable at a glance, not inferred from the absence of a paragraph.
+  var llm = DATA.llm_layer || {};
+  document.getElementById("llm-note").textContent = llm.enabled
+    ? ("Generated in " + llm.output_language + ". " + (llm.constraint || "") + " "
+       + (llm.data_protection || ""))
+    : (llm.note || "The explanation layer did not run.");
+
+  var lists = DATA.reference_lists || {};
+  var listNames = Object.keys(lists);
+  if (listNames.length) {
+    document.getElementById("reference-lists-block").hidden = false;
+    var rl = document.getElementById("reference-lists");
+    listNames.forEach(function (name) {
+      var info = lists[name];
+      var li = el("li");
+      li.appendChild(el("strong", null, name.replace(/_/g, " ") + ": "));
+      var bits = [];
+      if (info.entries !== undefined) bits.push(info.entries + " entries");
+      if (info.exonerating_entries !== undefined) bits.push(info.exonerating_entries + " exonerating");
+      if (info.patterns !== undefined) bits.push(info.patterns + " patterns");
+      if (info.band) bits.push("band " + info.band);
+      if (info.version) bits.push("version " + info.version);
+      if (info.loaded_from) bits.push(info.loaded_from);
+      li.appendChild(document.createTextNode(bits.join(" · ")));
+      rl.appendChild(li);
+    });
+
+    // Each list's own scholarly-context note, and its own declaration that it
+    // is incomplete, have to reach a reader — they govern how both a match and
+    // a non-match may be read, and cannot sit unread in the JSON.
+    var queueSection = document.getElementById("queue-section");
+    var anchor = document.getElementById("queue");
+    [["aliu_red_flag_names", "Reading the ALIU Red Flag Names List", "critical_scholarly_context"],
+     ["confiscation_channel_actors", "Reading the confiscation-channel actor list", "critical_context"]
+    ].forEach(function (spec) {
+      var info = lists[spec[0]];
+      if (!info) return;
+      var body = [info[spec[2]], info.non_match_caveat].filter(Boolean).join(" ");
+      if (!body) return;
+      var note = el("div", "context-note");
+      var heading = spec[1];
+      if (info.list_status) heading += " — " + info.list_status;
+      note.appendChild(el("strong", null, heading));
+      note.appendChild(el("span", null, body));
+      queueSection.insertBefore(note, anchor);
+    });
+  }
+})();
+</script>
+</body>
+</html>

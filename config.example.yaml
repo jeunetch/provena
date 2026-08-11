@@ -1,0 +1,57 @@
+# Copy to config.yaml and adjust — config.yaml is gitignored.
+#
+# NOTE: this file is not read by the pipeline yet. In the current build the
+# CLI flags are the live interface (`--onset-table`, `--anonymous-patterns`,
+# `--aliu-list`, `--actor-list`, `--institution-commitment-date`,
+# `--circa-margin-years`). This file documents the intended settings and the
+# defaults those flags carry.
+
+# Path to the (bundled) ALIU Red Flag Names List — see data/aliu_red_flag_names.json
+aliu_list_path: "data/aliu_red_flag_names.json"
+
+# Optional institution-supplied additional risk list — never bundled or hardcoded by default.
+# institution_risk_list_path: ""
+
+# Persecution onset table — configurable, extend per institution's collection scope.
+# See data/persecution_onset_table.json for the default (Germany, Austria, occupied
+# territories 1933-1945, extended to ~1955 for post-war restitution complications).
+persecution_onset_table_path: "data/persecution_onset_table.json"
+
+# Confiscation-channel actors (auction houses, agencies) — each entry must cite a source.
+confiscation_channel_actors_path: "data/confiscation_channel_actors.json"
+
+# Chronological gap threshold is NOT a simple day count in this design — gap position
+# relative to a persecution window matters more than raw length. See heuristics.py.
+
+# Institution's own Washington Principles commitment date — used by rule DQ-002
+# ("post-commitment acquisition with thin pre-1945 provenance"). Leave blank to use
+# the default of 1998-12-03 (Washington Conference Principles). The date actually
+# applied, and whether it was the default, is stated in every report.
+institution_commitment_date: ""
+
+# Anonymous-owner patterns for rule PC-006, with the 1933-1950 band. Configurable
+# so institutions can add the conventions their own records use.
+anonymous_owner_patterns_path: "data/anonymous_owner_patterns.json"
+
+# Widening applied to a `circa` date so overlap questions can be asked of it.
+# A PLACEHOLDER with no sourced basis — not a validated field-practice figure.
+circa_margin_years: 5
+
+# Output language for LLM explanations: de / fr / it / en
+output_language: "en"
+
+# LLM explanation layer. OFF unless an endpoint is set — no endpoint, no call,
+# and every llm_explanation stays null.
+#
+# The Infomaniak request shape is NOT assumed by this tool. Confirm the current
+# chat-completions path, your product id and the model id against Infomaniak's
+# developer documentation, then set the full URL here. Two paths are in
+# circulation in secondary sources:
+#   https://api.infomaniak.com/1/ai/{product_id}/openai/chat/completions
+#   https://api.infomaniak.com/2/ai/{product_id}/openai/v1/chat/completions
+llm_endpoint: ""
+llm_model: ""
+
+# Name of the environment variable holding the API key. The key itself is never
+# read from this file or from a command-line flag.
+llm_api_key_env: "INFOMANIAK_API_KEY"

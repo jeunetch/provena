@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "status": "SEED — INCOMPLETE, NOT FOR PRODUCTION USE",
+    "description": "Manually verified seed entries only. Full list has ~2,000 individuals and requires careful curation by a domain expert before production use — see CLAUDE.md Name Matching section for why bare list-membership must never be rendered as an accusation.",
+    "source_collection": "OSS Art Looting Investigation Unit (ALIU) Reports 1945-1946 and Red Flag Names List and Index",
+    "primary_archive": "National Archives and Records Administration (NARA), Washington DC — https://www.archives.gov/research/holocaust/art/oss-art-looting-investigation-name-index.html",
+    "public_domain_basis": "US government work product, 1945-1946",
+    "critical_scholarly_context": "The list is under active critical reassessment — see University of Bonn KHI project 'Under suspicion: a critical analysis of the Red Flag Names List of 1945/46' (https://www.khi.uni-bonn.de/fpk/en/news-1/unter-verdacht-eine-kritische-untersuchung-der-red-flag-names-liste-von-1945-46). Presence on this list is a 1946 investigative note, not a legal finding — some entries explicitly exonerate the named individual (see Metternich entry below). Every match rendered by this tool must include the entry's original annotation, never a bare 'flagged' label.",
+    "last_verified": "2026-08-09"
+  },
+  "entries": [
+    {
+      "name": "Haberstock, Karl",
+      "name_variants": ["Karl Haberstock"],
+      "entry_type": "documented_concern",
+      "annotation": "Berlin, Kurfürstenstrasse 59, Nuremberg. The leading Nazi art dealer. Involved from 1933-39 in the campaign against 'degenerate' art and sold such paintings at great profit outside of Germany. Became Hitler's dealer in 1936 and was directly responsible for the appointment of Posse to the directorship of Linz. The most prolific German buyer in Paris during the war and regarded in all quarters as the most important German art figure. In custody, US Chief of Counsel, Nuremberg.",
+      "source_url": "https://www.lootedart.com/MVI3RM469661",
+      "cross_referenced_sources": [
+        "https://www.wikidata.org/wiki/Q1731388",
+        "https://en.wikipedia.org/wiki/Karl_Haberstock"
+      ],
+      "verification_note": "Text corroborated across lootedart.com, openartdata.org, and Wikidata independently; consistent across all three."
+    },
+    {
+      "name": "Lange, Hans W.",
+      "name_variants": ["Hans W. Lange", "Hans Lange"],
+      "entry_type": "documented_concern",
+      "annotation": "Berlin/Zoelendorff, Kleiststrasse 6. Successor to the Jewish dealer Paul Graupe, now in the US. Director of the important Berlin auction house which bears his name. Prominent in purchases and auctions of works of art acquired in occupied countries. Close contact of Haberstock, Lohse, Dietrich and other key figures. Father, Hans Lange, resident of Alt Aussee, Austria. In Russian custody, in a Luftwaffe hospital, Berlin.",
+      "source_url": "https://www.academia.edu/1746315/OSS_ALIU_list_of_Red_Flag_names",
+      "cross_referenced_sources": [],
+      "verification_note": "Independently corroborates the 'successor to Paul Graupe's forcibly Aryanized business' fact used elsewhere in this project's design discussion — single primary source found so far, worth a second independent citation before treating as fully verified."
+    },
+    {
+      "name": "Wolff Metternich, Franz",
+      "name_variants": ["Franz Wolff-Metternich", "Count Franz Wolff Metternich", "Graf Wolff-Metternich"],
+      "entry_type": "exonerating",
+      "annotation": "Bonn, Blücherstrasse 2. Appointed in May 1940 by the German High Command as Director of Kunstschutz for France. In 1942, placed in charge of all Kunstschutz activities in France, the Netherlands, the Balkans and Italy. Universally regarded as having acted at all times with complete integrity, and as having shown the greatest sense of responsibility for the preservation of works of art.",
+      "source_url": "https://www.openartdata.org/p/red-flag-names-from-art-looting.html",
+      "cross_referenced_sources": [],
+      "verification_note": "Included specifically as a worked example of why name-matching must render the original annotation, not a bare flag — this individual is documented as having actively protected art, not looted it, despite appearing in the same historical index. Single primary source found so far; corroborates well against general historical record of Wolff-Metternich's role, but get a second citation before production use."
+    }
+  ]
+}
