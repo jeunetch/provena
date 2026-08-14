@@ -9,6 +9,16 @@ Declaration).
 professional provenance researcher. See CLAUDE.md for full methodology,
 sources, and design rationale.**
 
+**The licence disclaims liability for this project's author, not for you.**
+Apache 2.0's AS IS clause protects the author. It does nothing for an
+institution that relies on this output and gets something wrong in an actual
+restitution matter — that exposure stays with the institution. This is the
+concrete reason the outstanding legal and provenance-research review is a
+precondition for treating the output as more than a rough triage aid, rather
+than a milestone to reach later. Until that review has happened, treat every
+flag as a question to put to a researcher and every non-flag as nothing at
+all.
+
 This is a triage aid, not a provenance report generator and not a legal
 determination. See the Output & Framing section of CLAUDE.md for why it
 never produces a numeric risk score or a "clean" verdict.
@@ -49,7 +59,11 @@ before the file is published.
 
 ## Quickstart
 
-Python 3.11+, no third-party dependencies for the CSV path.
+Python 3.11+. Screening records needs **no third-party packages at all** — the
+heuristic layer, both input adapters, the guard, the report and the test suite
+run on the standard library. `requirements.txt` carries `requests`, which is
+needed only to make a network call: the optional LLM layer and the LIDO
+vocabulary script.
 
 ```sh
 python -m src.pipeline examples/example_input.xml --out report.json --html report.html
@@ -522,8 +536,29 @@ nothing consumes it.
 `--institution-commitment-date` sets the Washington Principles commitment
 date for `DQ-002`. It defaults to 1998-12-03 and the date applied — and
 whether it was the default — is stated in the flag and in the report.
-`config.example.yaml` documents the same settings, but the YAML file is not
-read yet: the CLI flags are the live interface in this build.
+`config.example.yaml` is a **reference sheet for these flags, not
+configuration**. This build has no YAML interface: editing that file, or
+copying it to `config.yaml`, changes nothing. Each setting in it names the
+flag that actually controls it, and the pipeline prints a warning if it finds
+a `config.yaml`, so the no-op is at least a loud one.
 
 ## License
-Apache 2.0 — see [LICENSE](LICENSE).
+
+Apache 2.0 — see [LICENSE](LICENSE). Chosen for the explicit patent grant and
+change-tracking requirement, both of which matter to the institutional legal
+and IT reviewers who are part of this tool's audience.
+
+Note what the licence does and does not do. Its AS IS and limitation-of-
+liability clauses disclaim the *author's* liability to you. They do not
+allocate any risk away from an institution that acts on this output: if a flag
+is wrong, or an absent flag is read as a clearance, the consequences in a real
+restitution matter fall on the institution, not on this project or its
+licence. No open-source licence changes that, and picking a different one
+would not either. What changes it is expert review of the methodology and of
+the name-matching exposure, which has not happened yet.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Methodology corrections from
+provenance researchers and lawyers are the contributions this project most
+needs — more than code.

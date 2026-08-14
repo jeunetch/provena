@@ -9,6 +9,7 @@ must never have been built from anything but the bundled synthetic example.
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -205,6 +206,69 @@ class PublishabilityCheckTests(unittest.TestCase):
             handle.write(html)
             path = pathlib.Path(handle.name)
         return check_publishable.scan_artifact(path)
+
+
+class DeadConfigTests(unittest.TestCase):
+    """config.example.yaml documents flags; nothing reads YAML in this build.
+
+    The risk is not the file, it is the silence: someone copies it to
+    config.yaml, edits it, and the tool runs on defaults while they believe it
+    is running on their settings. On a tool whose output is a research work
+    queue, a silent no-op is the failure mode the rest of the design exists to
+    prevent, so the pipeline says so.
+    """
+
+    def test_the_example_says_plainly_that_it_is_not_read(self):
+        text = pathlib.Path("config.example.yaml").read_text(encoding="utf-8")
+        self.assertIn("NOT READ BY THE TOOL", text)
+
+    def test_every_setting_names_the_flag_that_controls_it(self):
+        text = pathlib.Path("config.example.yaml").read_text(encoding="utf-8")
+        settings = [
+            line.split(":")[0]
+            for line in text.splitlines()
+            if line and not line.startswith(("#", " ")) and ":" in line
+        ]
+        self.assertTrue(settings)
+        for setting in settings:
+            with self.subTest(setting=setting):
+                before = text.split(f"\n{setting}:")[0]
+                self.assertIn("# Flag: ", before.rsplit("\n\n", 1)[-1], setting)
+
+    def test_nothing_actually_parses_yaml(self):
+        # If a YAML interface is ever added, this test should fail and the
+        # warning below should go with it.
+        for path in pathlib.Path("src").glob("*.py"):
+            self.assertNotIn("import yaml", path.read_text(encoding="utf-8"))
+
+    def test_a_stray_config_yaml_produces_a_warning(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = pathlib.Path(work)
+            (root / "config.yaml").write_text("circa_margin_years: 40\n")
+            result = subprocess.run(
+                [sys.executable, "-m", "src.pipeline",
+                 str(pathlib.Path("examples/example_input.csv").resolve()),
+                 "--out", str(root / "out.json")],
+                cwd=work,
+                capture_output=True,
+                text=True,
+                env={**os.environ, "PYTHONPATH": str(pathlib.Path.cwd())},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("config.yaml is present but is NOT read", result.stderr)
+
+    def test_no_warning_when_there_is_no_config_yaml(self):
+        with tempfile.TemporaryDirectory() as work:
+            result = subprocess.run(
+                [sys.executable, "-m", "src.pipeline",
+                 str(pathlib.Path("examples/example_input.csv").resolve()),
+                 "--out", str(pathlib.Path(work) / "out.json")],
+                cwd=work,
+                capture_output=True,
+                text=True,
+                env={**os.environ, "PYTHONPATH": str(pathlib.Path.cwd())},
+            )
+            self.assertNotIn("config.yaml", result.stderr)
 
 
 if __name__ == "__main__":

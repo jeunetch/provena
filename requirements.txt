@@ -1,1 +1,16 @@
+# Nothing here is needed to screen records.
+#
+# The heuristic layer, BOTH input adapters (CSV and LIDO-XML), the LLM output
+# guard, the report renderer and the entire test suite run on the Python 3.11
+# standard library alone. `pip install -r requirements.txt` is only required
+# for the two things that make a network call:
+#
+#   requests  -> src/llm_client.py (the optional LLM explanation layer, which
+#                is off by default and imports requests lazily, so the import
+#                does not happen unless an endpoint is configured)
+#             -> scripts/fetch_lido_event_types.py (re-verifies the LIDO Event
+#                Type vocabulary against the upstream SPARQL endpoint)
+#
+# So: to run the tool, install nothing. To generate plain-language
+# explanations, install this.
 requests

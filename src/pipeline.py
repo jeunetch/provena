@@ -361,6 +361,21 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    # config.example.yaml documents the settings but nothing reads YAML in this
+    # build — the CLI flags are the interface. Someone who copies it to
+    # config.yaml and edits it would otherwise get a silent no-op, with the
+    # tool running on defaults while they believe it is running on their
+    # settings. On a tool whose output is a research work queue, that is the
+    # kind of quiet wrongness the rest of the design exists to prevent.
+    if Path("config.yaml").exists():
+        print(
+            "WARNING: config.yaml is present but is NOT read. This build has no "
+            "YAML interface; the CLI flags are the live interface, and this run "
+            "used them (plus defaults) — not config.yaml. See "
+            "config.example.yaml, which names the flag for each setting.",
+            file=sys.stderr,
+        )
+
     commitment_date = None
     if args.institution_commitment_date:
         try:

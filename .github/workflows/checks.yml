@@ -1,0 +1,97 @@
+# Offline checks. Blocking, so the things this project relies on cannot be
+# skipped by forgetting.
+#
+# THIS WORKFLOW MUST NEVER CALL THE INFOMANIAK API, and no secret may be added
+# to it. The demo artifact is generated locally and committed as static HTML
+# precisely so that nothing in the published path holds a credential; a CI job
+# with an API key would put one back. See CONTRIBUTING.md — the live guard
+# validation is deliberately a local, human-reviewed step and cannot be
+# automated here.
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history. scripts/check_publishable.py scans the repository's
+          # history for credential shapes, and against a shallow clone that
+          # scan passes vacuously — it would report "clean" because it can
+          # only see one commit, which is worse than not running it.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # No install step: the heuristic path, both adapters, the guard and the
+      # whole test suite run on the standard library alone. `requests` is only
+      # needed to make a live call, which nothing here does.
+      - name: Test suite
+        run: python -m unittest discover tests
+
+      - name: Pre-publication gate
+        run: python scripts/check_publishable.py --artifact docs/index.html
+
+  guard-changes:
+    # The guard's behaviour is established by live validation runs that CI
+    # cannot perform. This does not verify the guard — it makes a change to it
+    # impossible to land silently.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require the validation record to move with the guard
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags origin "$BASE"
+          changed=$(git diff --name-only "origin/$BASE...HEAD")
+          guard=$(printf '%s\n' "$changed" | grep -E \
+            '^(src/llm_guard\.py|src/llm_client\.py|data/llm_output_language\.json|scripts/validate_llm_live\.py)$' || true)
+          if [ -z "$guard" ]; then
+            echo "No guard-relevant files changed."
+            exit 0
+          fi
+          echo "Guard-relevant files changed:"
+          printf '  %s\n' $guard
+          if printf '%s\n' "$changed" | grep -qx 'README.md'; then
+            echo "README.md changed too — validation record assumed updated."
+            exit 0
+          fi
+          cat >&2 <<'MESSAGE'
+
+          FAILED: the guard changed but the validation record did not.
+
+          Every entry in the README's validation run table is a regression that
+          a plausible-looking change introduced. Six live runs found two real
+          bugs this way — a sentence-counting defect that read an initial's
+          period as a sentence end, and an Italian narrative leak. A guard
+          change that lands without a run is a change nobody has evidence for.
+
+          Re-run it locally, against the live model, then record the outcome:
+
+            python scripts/validate_llm_live.py --repeats 5
+            python scripts/validate_llm_live.py --languages de --repeats 5 --show-rejected
+
+          Then add a row to the run table in README.md and note what changed.
+          If the change genuinely cannot affect guard behaviour, say so in the
+          README instead — the point is that a human states it either way.
+
+          This check is a proxy, not a substitute: CI holds no credentials by
+          design and cannot tell whether the run happened, only whether anyone
+          wrote down that it did.
+          MESSAGE
+          exit 1

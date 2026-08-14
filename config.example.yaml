@@ -1,12 +1,18 @@
-# Copy to config.yaml and adjust — config.yaml is gitignored.
+# ============================================================================
+# NOT READ BY THE TOOL. This build has no YAML interface.
 #
-# NOTE: this file is not read by the pipeline yet. In the current build the
-# CLI flags are the live interface (`--onset-table`, `--anonymous-patterns`,
-# `--aliu-list`, `--actor-list`, `--institution-commitment-date`,
-# `--circa-margin-years`). This file documents the intended settings and the
-# defaults those flags carry.
+# Editing this file, or copying it to config.yaml, changes NOTHING. The CLI
+# flags are the live interface, and each setting below names the flag that
+# actually controls it. The pipeline prints a warning if it finds a
+# config.yaml, so the no-op is at least a loud one.
+#
+# The file is kept because it documents every configurable setting and its
+# default in one place. Treat it as a reference sheet for the flags, not as
+# configuration.
+# ============================================================================
 
 # Path to the (bundled) ALIU Red Flag Names List — see data/aliu_red_flag_names.json
+# Flag: --aliu-list
 aliu_list_path: "data/aliu_red_flag_names.json"
 
 # Optional institution-supplied additional risk list — never bundled or hardcoded by default.
@@ -15,9 +21,11 @@ aliu_list_path: "data/aliu_red_flag_names.json"
 # Persecution onset table — configurable, extend per institution's collection scope.
 # See data/persecution_onset_table.json for the default (Germany, Austria, occupied
 # territories 1933-1945, extended to ~1955 for post-war restitution complications).
+# Flag: --onset-table
 persecution_onset_table_path: "data/persecution_onset_table.json"
 
 # Confiscation-channel actors (auction houses, agencies) — each entry must cite a source.
+# Flag: --actor-list
 confiscation_channel_actors_path: "data/confiscation_channel_actors.json"
 
 # Chronological gap threshold is NOT a simple day count in this design — gap position
@@ -27,31 +35,42 @@ confiscation_channel_actors_path: "data/confiscation_channel_actors.json"
 # ("post-commitment acquisition with thin pre-1945 provenance"). Leave blank to use
 # the default of 1998-12-03 (Washington Conference Principles). The date actually
 # applied, and whether it was the default, is stated in every report.
+# Flag: --institution-commitment-date
 institution_commitment_date: ""
 
 # Anonymous-owner patterns for rule PC-006, with the 1933-1950 band. Configurable
 # so institutions can add the conventions their own records use.
+# Flag: --anonymous-patterns
 anonymous_owner_patterns_path: "data/anonymous_owner_patterns.json"
 
 # Widening applied to a `circa` date so overlap questions can be asked of it.
 # A PLACEHOLDER with no sourced basis — not a validated field-practice figure.
+# Flag: --circa-margin-years
 circa_margin_years: 5
 
 # Output language for LLM explanations: de / fr / it / en
+# Flag: --llm-language
 output_language: "en"
 
-# LLM explanation layer. OFF unless an endpoint is set — no endpoint, no call,
-# and every llm_explanation stays null.
+# LLM explanation layer. OFF unless a product id or endpoint is given — no
+# endpoint, no call, and every llm_explanation stays null.
 #
-# The Infomaniak request shape is NOT assumed by this tool. Confirm the current
-# chat-completions path, your product id and the model id against Infomaniak's
-# developer documentation, then set the full URL here. Two paths are in
-# circulation in secondary sources:
-#   https://api.infomaniak.com/1/ai/{product_id}/openai/chat/completions
-#   https://api.infomaniak.com/2/ai/{product_id}/openai/v1/chat/completions
+# The request shape is confirmed against a real account:
+#   POST https://api.infomaniak.com/2/ai/{product_id}/openai/v1/chat/completions
+# Bearer-authenticated, OpenAI-compatible, text at choices[0].message.content.
+# The endpoint is still not defaulted: without a product id the layer does not
+# run, so a misconfiguration cannot make a call silently. Set the product id in
+# .env (INFOMANIAK_PRODUCT_ID), not here — this file is committed.
+# Flag: --llm-endpoint (overrides --llm-product-id)
 llm_endpoint: ""
+
+# Defaults to the Apertus id confirmed through the account's /models listing,
+# swiss-ai/Apertus-v1.5-70B — which is NOT the id used as an example in the
+# documentation. Override only to test a different model on the same endpoint.
+# Flag: --llm-model
 llm_model: ""
 
 # Name of the environment variable holding the API key. The key itself is never
 # read from this file or from a command-line flag.
+# Flag: --llm-api-key-env
 llm_api_key_env: "INFOMANIAK_API_KEY"
