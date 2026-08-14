@@ -555,11 +555,15 @@ def _flag(
     statement: str,
     cited_fields: dict[str, object],
     tier: PresumptionTier | None = None,
+    methodology: str | None = None,
 ) -> dict[str, object]:
     flag: dict[str, object] = {
         "rule_id": rule_id,
         "rule_statement": statement,
-        "methodology": METHODOLOGY[rule_id],
+        # A rule with more than one limb may need to state a different
+        # grounding per limb: PC-003's window methodology ends by pointing at
+        # a cited onset-table entry, which a state-based flag does not have.
+        "methodology": methodology or METHODOLOGY[rule_id],
         "cited_fields": cited_fields,
     }
     if tier is not None:
@@ -825,28 +829,81 @@ def rule_fluchtgut(chain: ObjectChain) -> tuple[list[dict[str, object]], list[st
 def _tier_from_state(
     record: ProvenanceRecord, table: PersecutionOnsetTable
 ) -> tuple[PresumptionTier, str]:
-    """Tier for a state-based engagement, where no window supplies bounds."""
+    """Tier for a state-based engagement, where no window supplies bounds.
+
+    This declines to assert a tier wherever the record's date cannot be placed
+    against the threshold, rather than defaulting to one. Two bugs came from
+    defaulting, with opposite signs: a 1970 record was clipped to the risk
+    band, produced an empty intersection, and fell through to the MILDER tier
+    with a basis string claiming its position was undetermined when it was not;
+    and a `circa 1935` record was assigned the HARSHER tier while its own basis
+    string said the position was undetermined.
+
+    Both are the same defect — picking a tier where the honest answer is that
+    there isn't one — and defaulting to the milder tier on unplaceable data is
+    the false-negative direction besides. The bounds used are the *widened*
+    ones, so an imprecise date can never produce a determinate answer, which is
+    the rule the rest of the schema already applies.
+    """
+    span = record.date_span
+    if span is None:
+        return PresumptionTier.NOT_APPLICABLE, (
+            "no tier asserted: the transaction_state records a persecution "
+            "transfer but carries no intrinsic REAO tier, and the record has no "
+            "date from which to derive one. No territory window was matched."
+        )
+
+    band = table.global_band
+    if span.overlap_certainty(*band) is None:
+        # Almost certainly a data-entry error rather than a claim. The state
+        # still says a persecution transfer occurred, so the flag stands; what
+        # cannot stand is a tier derived from a date the band excludes.
+        return PresumptionTier.NOT_APPLICABLE, (
+            f"no tier asserted: the recorded date ({span.describe()}) lies "
+            f"wholly outside the screening band {band[0].isoformat()} to "
+            f"{band[1].isoformat()}, so no REAO tier can be derived from it. "
+            f"The record's own transaction_state and its date do not agree; "
+            f"check the date before reading anything into this flag."
+        )
+
     recorded = intrinsic_tier(record.transaction_state)
     if recorded is not None:
         return recorded, (
             "recorded in transaction_state; no territory window was matched, so "
             "the tier comes from the state's own REAO definition"
         )
-    if record.date_span is None:
-        # `entziehung` and `zwangsverkauf` carry no intrinsic tier — the tier
-        # is a function of the date, and there is no date. Saying so beats
-        # picking one.
-        return PresumptionTier.NOT_APPLICABLE, (
-            "no tier asserted: the transaction_state records a persecution "
-            "transfer but carries no intrinsic REAO tier, and the record has no "
-            "date from which to derive one. No territory window was matched."
+
+    threshold = table.heightened_from
+    label = f"{threshold.isoformat()} ({table.heightened_from_label})"
+    if span.earliest is not None and span.earliest >= threshold:
+        return PresumptionTier.HEIGHTENED, (
+            f"the record's date lies wholly on or after {label}, allowing for "
+            f"its stated precision. No territory window was matched."
         )
-    tier, basis = _tier_by_nuremberg(record, table, table.global_band)
-    return tier, (
-        f"derived from the record's own date against "
-        f"{table.heightened_from.isoformat()} ({table.heightened_from_label}); "
-        f"no territory window was matched. {basis}"
+    if span.latest is not None and span.latest < threshold:
+        return PresumptionTier.ORDINARY, (
+            f"the record's date lies wholly before {label}, allowing for its "
+            f"stated precision. No territory window was matched."
+        )
+    return PresumptionTier.NOT_APPLICABLE, (
+        f"no tier asserted: allowing for the stated precision "
+        f"'{span.precision.value}', the recorded date ({span.describe()}) "
+        f"cannot be placed wholly on either side of {label}. A widened or "
+        f"open-ended date never yields a determinate tier, and reporting the "
+        f"harsher of two possibilities would assert what the record does not "
+        f"establish. No territory window was matched."
     )
+
+
+METHODOLOGY_PC_003_STATE_LIMB = (
+    "REAO (Rückerstattungsanordnung) Art. 3. This flag rests on the record's "
+    "OWN `transaction_state`, which names a persecution-related transfer "
+    "directly, and not on any territory window — no persecution-onset table "
+    "entry is cited for it, because none was matched. Where a tier is given it "
+    "is either the state's own REAO definition or the transfer's position "
+    "relative to 15 September 1935 (Nuremberg Laws); where the record's date "
+    "cannot be placed on one side of that threshold, no tier is asserted."
+)
 
 
 def rule_persecution_window(
@@ -963,7 +1020,15 @@ def rule_persecution_window(
             f"persecution-related transfer on its face. The record contains no "
             f"evidence either way on those questions."
         )
-        flags.append(_flag(RULE_PC_003, statement, cited, tier))
+        flags.append(
+            _flag(
+                RULE_PC_003,
+                statement,
+                cited,
+                tier,
+                methodology=METHODOLOGY_PC_003_STATE_LIMB,
+            )
+        )
 
     if settled:
         skips.append(

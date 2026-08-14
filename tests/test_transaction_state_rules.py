@@ -96,7 +96,7 @@ class RecordedPersecutionStateTests(unittest.TestCase):
     def test_the_tier_basis_says_it_came_from_the_record_not_a_window(self):
         flag = flags(screen([row("CH", "zwangsverkauf")])["CH"], RULE_PC_003)[0]
         basis = flag["cited_fields"]["presumption_tier_basis"]
-        self.assertIn("no territory window", basis)
+        self.assertIn("no territory window", basis.lower())
         self.assertIn(
             "transaction_state", flag["cited_fields"]["basis"]
         )
@@ -143,6 +143,119 @@ class RecordedPersecutionStateTests(unittest.TestCase):
         )
         cited = flags(result, RULE_PC_003)[0]["cited_fields"]
         self.assertIn("territory", cited, "the window limb should be the one kept")
+
+
+class TierDerivationTests(unittest.TestCase):
+    """Where the date cannot be placed against the threshold, decline.
+
+    Two bugs with opposite signs, both from picking a tier instead of
+    declining to. A 1970 record was clipped to the risk band, produced an
+    empty intersection, and fell through to the MILDER tier — with a basis
+    string claiming its position was undetermined when it plainly was not. A
+    `circa 1935` record was assigned the HARSHER tier while its own basis
+    string said the position was undetermined.
+
+    In both, the machine-readable field contradicted the text a reader
+    consults to check it, which is the placement problem `identity_caveat`
+    had before it moved into `rule_statement`.
+    """
+
+    def tier_and_basis(self, date_from, precision="year", state="zwangsverkauf"):
+        result = screen([row("T", state, date_from=date_from, precision=precision)])["T"]
+        flag = flags(result, RULE_PC_003)[0]
+        return flag["presumption_tier"], flag["cited_fields"]["presumption_tier_basis"]
+
+    def test_a_date_wholly_after_the_threshold_is_heightened(self):
+        for year in ("1940", "1954", "1955"):
+            with self.subTest(year=year):
+                tier, basis = self.tier_and_basis(year)
+                self.assertEqual(tier, PresumptionTier.HEIGHTENED.value)
+                self.assertIn("wholly on or after", basis)
+
+    def test_a_date_wholly_before_the_threshold_is_ordinary(self):
+        # In-band but pre-threshold: the band opens 1933-01-30 and the
+        # Nuremberg threshold is 1935-09-15.
+        tier, basis = self.tier_and_basis("1934")
+        self.assertEqual(tier, PresumptionTier.ORDINARY.value)
+        self.assertIn("wholly before", basis)
+
+    def test_a_date_before_the_band_opens_is_also_out_of_band(self):
+        # Written expecting "ordinary" and corrected: 1930 predates the
+        # earliest onset in the table, so it is outside the band by exactly
+        # the same rule as 1970, and the state and the date disagree in the
+        # same way. Recording the correction rather than flipping it.
+        tier, basis = self.tier_and_basis("1930")
+        self.assertEqual(tier, PresumptionTier.NOT_APPLICABLE.value)
+        self.assertIn("outside the screening band", basis)
+
+    def test_a_date_outside_the_band_asserts_no_tier(self):
+        # Was: ordinary — the milder tier, on data the code could not place,
+        # for a date further past the threshold than any heightened case.
+        for year in ("1956", "1970", "2001"):
+            with self.subTest(year=year):
+                tier, basis = self.tier_and_basis(year)
+                self.assertEqual(tier, PresumptionTier.NOT_APPLICABLE.value)
+                self.assertIn("outside the screening band", basis)
+                self.assertIn("do not agree", basis)
+
+    def test_a_record_outside_the_band_still_reaches_the_queue(self):
+        # The state still says a persecution transfer occurred. Only the tier
+        # is withheld.
+        result = screen([row("T", "zwangsverkauf", date_from="2001")])["T"]
+        self.assertTrue(flags(result, RULE_PC_003))
+
+    def test_a_circa_date_straddling_the_threshold_asserts_no_tier(self):
+        # Was: heightened, while the basis said the position was undetermined.
+        tier, basis = self.tier_and_basis("1935", precision="circa")
+        self.assertEqual(tier, PresumptionTier.NOT_APPLICABLE.value)
+        self.assertIn("cannot be placed wholly on either side", basis)
+
+    def test_a_circa_date_clear_of_the_threshold_still_resolves(self):
+        # Declining must not become declining always: circa 1950 widens to
+        # 1945-1955, which is wholly after the threshold.
+        tier, _ = self.tier_and_basis("1950", precision="circa")
+        self.assertEqual(tier, PresumptionTier.HEIGHTENED.value)
+
+    def test_an_open_ended_date_resolves_only_when_it_can(self):
+        before, _ = self.tier_and_basis("1934", precision="before")
+        self.assertEqual(before, PresumptionTier.ORDINARY.value)
+        after, _ = self.tier_and_basis("1940", precision="after")
+        self.assertEqual(after, PresumptionTier.HEIGHTENED.value)
+
+    def test_the_basis_never_contradicts_the_tier_it_explains(self):
+        # The invariant behind both bugs, stated so neither can return.
+        for date_from, precision in (
+            ("1940", "year"), ("1955", "year"), ("1956", "year"), ("1970", "year"),
+            ("2001", "year"), ("1935", "circa"), ("1950", "circa"),
+            ("1934", "year"), ("1930", "year"), ("1934", "before"),
+            ("1940", "after"),
+        ):
+            with self.subTest(date=date_from, precision=precision):
+                tier, basis = self.tier_and_basis(date_from, precision)
+                undetermined = (
+                    "cannot be placed" in basis or "no tier asserted" in basis
+                )
+                self.assertEqual(
+                    undetermined,
+                    tier == PresumptionTier.NOT_APPLICABLE.value,
+                    f"basis says undetermined={undetermined} but tier is {tier}",
+                )
+
+    def test_the_state_limb_does_not_point_at_an_onset_table_entry(self):
+        # The window methodology ends "see the cited persecution-onset table
+        # entry". A state-based flag cites none, and said so in cited_fields
+        # while the methodology string still pointed at one.
+        flag = flags(screen([row("T", "zwangsverkauf")])["T"], RULE_PC_003)[0]
+        self.assertNotIn(
+            "see the cited persecution-onset table entry", flag["methodology"]
+        )
+        self.assertIn("none was matched", flag["methodology"])
+
+    def test_the_window_limb_keeps_its_own_methodology(self):
+        flag = flags(
+            screen([row("D", "purchase", "Munich, Germany")])["D"], RULE_PC_003
+        )[0]
+        self.assertIn("persecution-onset table entry", flag["methodology"])
 
 
 class FluchtgutTests(unittest.TestCase):

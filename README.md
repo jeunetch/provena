@@ -552,6 +552,17 @@ themselves, and they need review by a provenance researcher or an admitted
 lawyer before this is presented as more than a documented-methodology
 prototype.
 
+- **The characterisation of `fluchtgut` as a contested category is mine, not
+  a cited source's.** `PC-010`'s methodology text states that Swiss practice
+  has historically distinguished property sold by a refugee already in a safe
+  haven from property taken in occupied territory, and that no REAO
+  presumption attaches to it. That framing comes from this project's own
+  specification, not from a source I can cite, and it is doing real work: it
+  is the reason `fluchtgut` asserts no presumption tier while the four other
+  persecution states engage one. If the distinction is wrong, or is narrower
+  than stated, the rule under-reports the category the methodology names as
+  most relevant to this tool's home jurisdiction. This is the newest of the
+  entries in this list and the least examined.
 - **Italy is modelled as two persecution windows**, not one: 1938–Aug 1943
   (racial laws) engages the ordinary presumption, Sep 1943–1955 the
   heightened presumption. The global 15 Sept 1935 Nuremberg threshold is not
