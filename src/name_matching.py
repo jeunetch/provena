@@ -341,8 +341,21 @@ def match_entry(
 def _single_token_outcome(
     token: str, person_forms: tuple[PersonName, ...]
 ) -> MatchOutcome:
-    """A lone token: a person's surname, or an organisation's own name."""
-    if any(known.surname == token for known in person_forms):
+    """A lone token: a person's surname, or an organisation's own name.
+
+    The test is whether the entry names a person AT ALL, not whether the token
+    equals a surname. A compound surname never equals one of its own tokens,
+    so an equality test sends "Behr" — against an entry for "von Behr, Kurt" —
+    down the organisation branch and returns it MORE confident than "von Behr",
+    with the identity caveat skipped. Less information must never produce more
+    confidence.
+
+    This is the same shape as the containment fallback removed above: an
+    unmatched case routed to the more confident outcome. The default is where
+    the defect lives, so the default is what changes — an entry that names a
+    person cannot yield an organisation match, whatever token reached it.
+    """
+    if person_forms:
         return MatchOutcome(MATCH_SURNAME_ONLY, False)
     return MatchOutcome(MATCH_ORGANISATION_NAME, True)
 

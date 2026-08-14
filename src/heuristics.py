@@ -1022,6 +1022,15 @@ def rule_confiscation_actors(
                     f"object was taken from."
                 )
             cited["presumption_tier_basis"] = tier_basis
+            if not outcome.identity_confirmed:
+                # Same reasoning as NM-001: the qualifier goes in the sentence
+                # a reader actually reads, not only in a key beneath it.
+                statement += (
+                    " IDENTITY NOT ESTABLISHED: the record gives a surname with "
+                    "no given name, and the entry names an individual, so a "
+                    "different person of the same surname is equally consistent "
+                    "with this record."
+                )
             flags.append(_flag(RULE_PC_005, statement, cited, tier))
 
     if undated:
@@ -1468,11 +1477,30 @@ def rule_aliu_name_match(
                 )
                 continue
 
+            # The caveat belongs in the headline sentence, not only in a key
+            # below it. This statement is what a reader reads and what the LLM
+            # layer restates; an identity qualifier that lives in cited_fields
+            # is exactly the "prose a reader may not reach" this project
+            # refuses to rely on everywhere else.
+            identity = (
+                ""
+                if outcome.identity_confirmed
+                else (
+                    " IDENTITY NOT ESTABLISHED: the record gives a surname with "
+                    "no given name, so a different individual of the same "
+                    "surname is equally consistent with it. This match does not "
+                    "say the record's party is the person the entry describes."
+                )
+            )
+            # Entry names often end in an initial ("Lange, Hans W."), so the
+            # sentence supplies its own full stop only when one is needed.
+            entry_name = entry.name.rstrip(".")
             statement = (
-                f"Name matches the ALIU Red Flag Names List entry for {entry.name}; "
-                f"see the cited source and the list's own annotation, quoted in "
-                f"full below. {ALIU_CITATION_DISCLAIMER} Unverified: what, if "
-                f"anything, connects this named party to this object's history?"
+                f"Name matches the ALIU Red Flag Names List entry for "
+                f"{entry_name}.{identity} See the cited source and the list's "
+                f"own annotation, quoted in full below. "
+                f"{ALIU_CITATION_DISCLAIMER} Unverified: what, if anything, "
+                f"connects this named party to this object's history?"
             )
             flags.append(
                 _flag(RULE_NM_001, statement, cited, PresumptionTier.NOT_APPLICABLE)

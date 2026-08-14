@@ -236,6 +236,144 @@ class DateGateTests(unittest.TestCase):
         self.assertIn("could not run", " ".join(skips))
 
 
+class CompoundSurnameTests(unittest.TestCase):
+    """Less information must never produce more confidence.
+
+    `_single_token_outcome` tested `known.surname == token`. A compound
+    surname never equals one of its own tokens, so "Behr" — against an entry
+    for "von Behr, Kurt" — fell through to the organisation default and came
+    back MORE confident than "von Behr", with the identity caveat skipped: a
+    person entry classified as an organisation, on the one branch that omits
+    the caveat.
+
+    The seed list masks this: its only compound-surname entry is exonerating.
+    It stops being masked as the list grows toward the ~2,000 ALIU names,
+    which are dense with von/van/de surnames. Hence a fixture rather than a
+    bundled entry.
+    """
+
+    def setUp(self):
+        import json
+        import tempfile
+
+        payload = {
+            "_meta": {"status": "test fixture"},
+            "entries": [
+                {
+                    "entry_id": "C1",
+                    "name": "von Behr, Kurt",
+                    "name_variants": ["Kurt von Behr"],
+                    "entry_type": "documented_concern",
+                    "annotation": "Fixture entry.",
+                    "source_url": "https://example.invalid/fixture",
+                }
+            ],
+        }
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump(payload, handle)
+            path = handle.name
+        # Read after the handle closes: an unflushed file loads as empty JSON.
+        self.entry = name_matching.load_aliu_list(path).entries[0]
+
+    def outcome(self, supplied: str):
+        return match_entry((supplied,), self.entry.terms, self.entry.person_forms)
+
+    def test_a_fragment_of_a_compound_surname_never_reads_as_an_organisation(self):
+        for supplied in ("Behr", "von Behr"):
+            with self.subTest(supplied=supplied):
+                outcome = self.outcome(supplied)
+                self.assertIsNotNone(outcome)
+                self.assertEqual(outcome.basis, MATCH_SURNAME_ONLY)
+                self.assertFalse(outcome.identity_confirmed)
+
+    def test_a_shorter_form_is_never_more_confident_than_a_longer_one(self):
+        # The invariant behind the defect, stated so it cannot come back.
+        full = self.outcome("von Behr, Kurt")
+        partial = self.outcome("von Behr")
+        fragment = self.outcome("Behr")
+        self.assertTrue(full.identity_confirmed)
+        self.assertFalse(partial.identity_confirmed)
+        self.assertFalse(fragment.identity_confirmed)
+
+    def test_a_conflicting_given_name_still_does_not_match(self):
+        self.assertIsNone(self.outcome("Behr, Anna"))
+        self.assertIsNone(self.outcome("von Behr, Anna"))
+
+    def test_an_entry_naming_a_person_can_never_yield_an_organisation_match(self):
+        # The fix is the default, not the equality test. Any token that
+        # reaches an entry with person_forms is a surname question.
+        from src.name_matching import MATCH_ORGANISATION_NAME, _single_token_outcome
+
+        person = name_matching.PersonName("von behr", ("kurt",))
+        self.assertEqual(
+            _single_token_outcome("anything", (person,)).basis, MATCH_SURNAME_ONLY
+        )
+        self.assertEqual(
+            _single_token_outcome("dorotheum", ()).basis, MATCH_ORGANISATION_NAME
+        )
+
+    def test_the_live_list_s_compound_entry_behaves_the_same(self):
+        wolff = next(
+            e for e in load_aliu_list(REAL_ALIU).entries if "Metternich" in e.name
+        )
+        for supplied in ("Wolff", "Metternich", "Wolff Metternich"):
+            with self.subTest(supplied=supplied):
+                outcome = match_entry((supplied,), wolff.terms, wolff.person_forms)
+                self.assertFalse(outcome.identity_confirmed)
+
+
+class StatementCarriesTheCaveatTests(unittest.TestCase):
+    """The headline sentence is what a reader reads and what the LLM restates."""
+
+    def _screen(self, owner_name: str, date_from: str = "1939"):
+        from src.csv_adapter import load_chains
+        from src.heuristics import build_config, screen_object
+        import pathlib
+        import tempfile
+
+        header = (
+            "object_id,object_title,object_class,owner_name,owner_name_variants,"
+            "date_from,date_to,date_precision,transaction_state,location,"
+            "source_citation,export_licence_present,is_institution_acquisition,"
+            "catalogue_reference,owner_stated_in_catalogue,"
+            "restitution_recipient_type,notes"
+        )
+        row = (
+            f'S-1,Work,painting,"{owner_name}",,{date_from},,year,purchase,'
+            f'"Berlin, Germany",Invoice,,,,,,'
+        )
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".csv", delete=False, encoding="utf-8"
+        ) as handle:
+            handle.write(header + "\n" + row + "\n")
+            path = pathlib.Path(handle.name)
+        chain = load_chains(path)[0]
+        return screen_object(chain, build_config())
+
+    def test_an_unconfirmed_identity_says_so_in_the_statement(self):
+        flags = self._screen("Lange")["persecution_context_flags"]
+        nm = [f for f in flags if f["rule_id"] == "NM-001"]
+        self.assertTrue(nm, "a bare surname should still reach the queue")
+        self.assertIn("IDENTITY NOT ESTABLISHED", nm[0]["rule_statement"])
+
+    def test_a_confirmed_identity_does_not_carry_the_qualifier(self):
+        flags = self._screen("Lange, Hans W.")["persecution_context_flags"]
+        nm = [f for f in flags if f["rule_id"] == "NM-001"]
+        self.assertTrue(nm)
+        self.assertNotIn("IDENTITY NOT ESTABLISHED", nm[0]["rule_statement"])
+
+    def test_the_two_statements_actually_differ(self):
+        # They were byte-identical before this change.
+        bare = self._screen("Lange")["persecution_context_flags"]
+        full = self._screen("Lange, Hans W.")["persecution_context_flags"]
+        self.assertNotEqual(
+            next(f for f in bare if f["rule_id"] == "NM-001")["rule_statement"],
+            next(f for f in full if f["rule_id"] == "NM-001")["rule_statement"],
+        )
+
+
 class SourceDisciplineTests(unittest.TestCase):
     def test_matching_follows_the_data_file_not_the_code(self):
         # Behavioural rather than a grep: a name invented here matches only
