@@ -123,6 +123,7 @@ RULE_PC_006 = "PC-006"
 RULE_PC_007 = "PC-007"
 RULE_PC_008 = "PC-008"
 RULE_PC_009 = "PC-009"
+RULE_PC_010 = "PC-010"
 RULE_DQ_001 = "DQ-001"
 RULE_DQ_002 = "DQ-002"
 RULE_NM_001 = "NM-001"
@@ -179,6 +180,17 @@ METHODOLOGY = {
         "frequently succeeded where internal restitution to the dispossessed family "
         "did not, so a settlement recorded to a state or institution leaves open "
         "whether the individuals or heirs ever received anything."
+    ),
+    RULE_PC_010: (
+        "REAO Art. 3 / Swiss restitution practice. `fluchtgut` names property "
+        "sold by a refugee who had already reached a safe haven. It is NOT a "
+        "presumption of persecution-related loss: Swiss practice has "
+        "historically distinguished it from property taken in occupied "
+        "territory, and whether — and on what terms — a fluchtgut sale should "
+        "found a claim is contested rather than settled. This criterion "
+        "therefore asserts no presumption tier and states the question. It is "
+        "among the parts of this tool most in need of review by a provenance "
+        "researcher and an admitted lawyer."
     ),
     RULE_PC_009: (
         "Export-licence rule. A cross-border movement dated 1933-1945 without a "
@@ -254,6 +266,11 @@ CRITERIA = [
     {
         "rule_id": RULE_PC_009,
         "title": "Cross-border movement 1933-1945 without a recorded export licence",
+        "axis": AXIS_PERSECUTION,
+    },
+    {
+        "rule_id": RULE_PC_010,
+        "title": "Record states a fluchtgut transfer (contested category)",
         "axis": AXIS_PERSECUTION,
     },
     {
@@ -743,12 +760,118 @@ def _tier_by_nuremberg(
     )
 
 
+# States whose own definition records a persecution transfer, independently of
+# where it happened. These engage PC-003 on the record's own statement — see
+# `rule_persecution_window` for why that second limb has to exist.
+#
+# `fluchtgut` is deliberately absent: it is a contested category rather than a
+# presumption, and gets its own criterion (PC-010) which asserts no tier.
+STATES_RECORDING_PERSECUTION = frozenset(
+    {
+        TransactionState.ENTZIEHUNG,
+        TransactionState.ZWANGSVERKAUF,
+        TransactionState.VERMUTUNG_DER_ENTZIEHUNG,
+        TransactionState.VERSCHAERFTE_VERMUTUNG,
+    }
+)
+
+
+def rule_fluchtgut(chain: ObjectChain) -> tuple[list[dict[str, object]], list[str]]:
+    """Records that state a `fluchtgut` transfer.
+
+    Kept apart from PC-003 deliberately. `fluchtgut` — property sold by a
+    refugee who had already reached a safe haven — is not a presumption of
+    persecution-related loss, and Swiss practice has historically treated it
+    as distinct from property taken in occupied territory. Whether such a sale
+    should found a claim, and on what terms, is contested rather than settled.
+
+    So this criterion asserts no tier and states the question. It also has to
+    exist at all: Switzerland has no persecution window and correctly never
+    will, so before this rule the one category the spec names as most relevant
+    to the tool's home jurisdiction could not fire.
+    """
+    flags: list[dict[str, object]] = []
+    for record in chain.records:
+        if record.transaction_state is not TransactionState.FLUCHTGUT:
+            continue
+        if is_resolved_state(record.transaction_state):
+            continue
+        cited = record.cite(
+            "owner_name", "date_span", "location", "transaction_state"
+        )
+        cited["transaction_state_gloss"] = STATE_GLOSSES[TransactionState.FLUCHTGUT]
+        cited["category_status"] = (
+            "contested. Swiss restitution practice has historically "
+            "distinguished fluchtgut from property taken in occupied "
+            "territory, and no presumption of persecution-related loss "
+            "attaches to it in the way REAO Art. 3 attaches one to a transfer "
+            "in an occupied territory. This tool asserts no tier here."
+        )
+        statement = (
+            "Unverified: on what terms was this sale made, and what became of "
+            "the proceeds? The record states its own transaction type as "
+            "'fluchtgut' — property sold by a refugee who had already reached a "
+            "safe haven. This is a CONTESTED category rather than a presumption: "
+            "no REAO presumption tier is asserted, and this flag makes no "
+            "finding that the transfer was persecution-related. It is recorded "
+            "because the record itself raises the question."
+        )
+        flags.append(
+            _flag(RULE_PC_010, statement, cited, PresumptionTier.NOT_APPLICABLE)
+        )
+    return flags, []
+
+
+def _tier_from_state(
+    record: ProvenanceRecord, table: PersecutionOnsetTable
+) -> tuple[PresumptionTier, str]:
+    """Tier for a state-based engagement, where no window supplies bounds."""
+    recorded = intrinsic_tier(record.transaction_state)
+    if recorded is not None:
+        return recorded, (
+            "recorded in transaction_state; no territory window was matched, so "
+            "the tier comes from the state's own REAO definition"
+        )
+    if record.date_span is None:
+        # `entziehung` and `zwangsverkauf` carry no intrinsic tier — the tier
+        # is a function of the date, and there is no date. Saying so beats
+        # picking one.
+        return PresumptionTier.NOT_APPLICABLE, (
+            "no tier asserted: the transaction_state records a persecution "
+            "transfer but carries no intrinsic REAO tier, and the record has no "
+            "date from which to derive one. No territory window was matched."
+        )
+    tier, basis = _tier_by_nuremberg(record, table, table.global_band)
+    return tier, (
+        f"derived from the record's own date against "
+        f"{table.heightened_from.isoformat()} ({table.heightened_from_label}); "
+        f"no territory window was matched. {basis}"
+    )
+
+
 def rule_persecution_window(
     chain: ObjectChain, table: PersecutionOnsetTable
 ) -> tuple[list[dict[str, object]], list[str]]:
-    """Returns (flags, skip_notes). One flag per (record, territory) engagement."""
+    """Returns (flags, skip_notes). One flag per (record, territory) engagement.
+
+    TWO LIMBS, and the second exists because the first is not reachable from
+    every record that states a persecution transfer:
+
+    1. the transfer's date overlaps a territory's persecution window;
+    2. the record's OWN `transaction_state` records a persecution transfer,
+       whatever the territory.
+
+    Without limb 2, `transaction_state` drove no rule at all: it was consulted
+    to pick a tier *inside* limb 1's gate, so a state could only ever select a
+    tier it could not itself reach. A recorded `zwangsverkauf` in Geneva
+    produced "screened, no criteria triggered" while an ordinary purchase in
+    Munich flagged — the terminal state the no-score design exists to prevent,
+    reached by another route. And Switzerland has no window and correctly
+    never will, so every Swiss record was structurally unreachable.
+    """
     flags: list[dict[str, object]] = []
     skips: list[str] = []
+    matched_by_window: set[str] = set()
     undated_with_location = []
     unlocated = []
     settled = []
@@ -808,6 +931,39 @@ def rule_persecution_window(
                     f"The record contains no evidence either way on those questions."
                 )
                 flags.append(_flag(RULE_PC_003, statement, cited, tier))
+                matched_by_window.add(record.source_ref)
+
+    # Limb 2. Only for records limb 1 did not already flag: a window match
+    # already carries the state in its cited fields and, where the state is a
+    # presumption definition, already took its tier from it.
+    for record in chain.records:
+        if is_resolved_state(record.transaction_state):
+            continue
+        if record.source_ref in matched_by_window:
+            continue
+        if record.transaction_state not in STATES_RECORDING_PERSECUTION:
+            continue
+
+        tier, tier_basis = _tier_from_state(record, table)
+        cited = record.cite(
+            "owner_name", "date_span", "location", "transaction_state"
+        )
+        cited["presumption_tier_basis"] = tier_basis
+        cited["transaction_state_gloss"] = STATE_GLOSSES[record.transaction_state]
+        cited["basis"] = (
+            "the record's own transaction_state, independently of territory. No "
+            "territory window was matched for this record — either its location "
+            "is outside the onset table, or none is recorded."
+        )
+        statement = (
+            f"Unverified: was fair value received for this transfer, and was the "
+            f"transferor free to dispose of the proceeds? The record states its "
+            f"own transaction type as {record.transaction_state.value!r} "
+            f"({STATE_GLOSSES[record.transaction_state]}), which records a "
+            f"persecution-related transfer on its face. The record contains no "
+            f"evidence either way on those questions."
+        )
+        flags.append(_flag(RULE_PC_003, statement, cited, tier))
 
     if settled:
         skips.append(
@@ -1586,6 +1742,10 @@ def screen_object(chain: ObjectChain, config: ScreeningConfig) -> dict[str, obje
     window_flags, window_skips = rule_persecution_window(chain, table)
     persecution_flags.extend(window_flags)
     coverage.extend(window_skips)
+
+    fluchtgut_flags, fluchtgut_skips = rule_fluchtgut(chain)
+    persecution_flags.extend(fluchtgut_flags)
+    coverage.extend(fluchtgut_skips)
 
     for rule in (
         lambda: rule_object_class(chain, config),

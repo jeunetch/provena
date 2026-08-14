@@ -454,7 +454,9 @@ class CsvAdapterTests(unittest.TestCase):
     def test_example_file_loads_and_orders_chains(self):
         chains = csv_adapter.load_chains("examples/example_input.csv")
         by_id = {c.object_id: c for c in chains}
-        self.assertEqual(len(chains), 24)
+        # Grows as the example gains demonstration objects; asserted so a
+        # silently dropped row still fails.
+        self.assertEqual(len(chains), 26)
         obj1 = by_id["OBJ-001"]
         self.assertEqual([r.date_from for r in obj1.records], ["1921", "1936-11-04", "1953"])
         # Undated records sort last so they never masquerade as the earliest event.

@@ -95,7 +95,7 @@ annotation, never as a characterization.
 | | |
 |---|---|
 | Input | LIDO-XML (`src/lido_adapter.py`), CSV (`src/csv_adapter.py`) |
-| Criteria | the full v1 rule set (12 rules, 13 rule IDs — see below) |
+| Criteria | 13 criteria, 14 rule IDs — see below |
 | Output | JSON + static HTML report: coverage map first, work queue second |
 
 ### `object_date`, and what PC-001 can and cannot tell you
@@ -163,6 +163,7 @@ requirement to thin them out.
 | Owner named pre-1933 absent from a post-1950 catalogue | `PC-007` | persecution context |
 | Restitution recorded to a state, not to heirs | `PC-008` | persecution context |
 | Cross-border movement 1933–1945, no export licence | `PC-009` | persecution context |
+| Record states a `fluchtgut` transfer (contested category) | `PC-010` | persecution context |
 | Missing source citation | `DQ-001` | documentation quality |
 | Post-commitment acquisition, thin pre-1945 chain | `DQ-002` | documentation quality |
 | ALIU list match, documented-concern entry | `NM-001` | persecution context |
@@ -171,6 +172,35 @@ requirement to thin them out.
 Each object's `coverage_note` states which criteria ran, which were skipped,
 and why, so an unflagged object is never mistaken for a
 screened-and-cleared one.
+
+### `transaction_state` engages PC-003 directly
+
+PC-003 has **two limbs**, and the second matters more than it looks:
+
+1. the transfer's date overlaps a territory's persecution window;
+2. the record's own `transaction_state` records a persecution transfer —
+   `entziehung`, `zwangsverkauf`, `vermutung_der_entziehung`,
+   `verschaerfte_vermutung` — whatever the territory.
+
+Limb 2 exists because without it `transaction_state` drove no rule at all. It
+was consulted only to pick a tier *inside* limb 1's gate, so a state could
+select a tier it could never reach on its own. A recorded `zwangsverkauf` in
+Geneva produced "screened, no criteria triggered" while an ordinary purchase
+in Munich flagged.
+
+**Switzerland is the case that makes this structural.** The onset table has no
+Swiss window and correctly never will — Switzerland was not occupied. Every
+Swiss record was therefore unreachable by limb 1, including every
+`fluchtgut` record, which the methodology names as the category most directly
+relevant to this tool's home jurisdiction.
+
+`fluchtgut` is **not** part of limb 2. It is a contested category rather than
+a presumption: Swiss practice has historically distinguished property sold by
+a refugee already in a safe haven from property taken in occupied territory,
+and whether such a sale should found a claim is unsettled. It has its own
+criterion, `PC-010`, which asserts **no presumption tier** and states the
+question. It is among the parts of this tool most in need of the outstanding
+provenance-research and legal review.
 
 ### LIDO-XML input
 
