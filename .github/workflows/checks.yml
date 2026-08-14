@@ -67,15 +67,15 @@ jobs:
           fi
           echo "Guard-relevant files changed:"
           printf '  %s\n' $guard
-          if printf '%s\n' "$changed" | grep -qx 'README.md'; then
-            echo "README.md changed too — validation record assumed updated."
+          if printf '%s\n' "$changed" | grep -qx 'scripts/VALIDATION.md'; then
+            echo "scripts/VALIDATION.md changed too — validation record assumed updated."
             exit 0
           fi
           cat >&2 <<'MESSAGE'
 
           FAILED: the guard changed but the validation record did not.
 
-          Every entry in the README's validation run table is a regression that
+          Every entry in scripts/VALIDATION.md's run table is a regression that
           a plausible-looking change introduced. Six live runs found two real
           bugs this way — a sentence-counting defect that read an initial's
           period as a sentence end, and an Italian narrative leak. A guard
@@ -86,9 +86,10 @@ jobs:
             python scripts/validate_llm_live.py --repeats 5
             python scripts/validate_llm_live.py --languages de --repeats 5 --show-rejected
 
-          Then add a row to the run table in README.md and note what changed.
+          Then add a row to the run table in scripts/VALIDATION.md and say what
+          changed.
           If the change genuinely cannot affect guard behaviour, say so in the
-          README instead — the point is that a human states it either way.
+          that file instead — the point is that a human states it either way.
 
           This check is a proxy, not a substitute: CI holds no credentials by
           design and cannot tell whether the run happened, only whether anyone

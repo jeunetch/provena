@@ -9,7 +9,7 @@ no professional provenance researcher or admitted lawyer having reviewed it.
 That is stated in the README and it is the honest state of the project.
 
 The most valuable contribution is someone qualified telling us a rule is
-wrong. Three areas are flagged in the README as **modelling decisions that
+wrong. Four areas are flagged in the README as **modelling decisions that
 need expert confirmation** — the two Italian persecution windows, the
 transcribed `implies_persecution_of_former_owner` gate on the actor list, and
 the placeholder `circa` margin. There is an issue template for exactly this.
@@ -24,7 +24,7 @@ These are design constraints, not preferences. A pull request that crosses one
 will be declined regardless of how well it is written.
 
 1. **No numeric risk score, and no "clean" / "cleared" / "low risk" label**,
-   under any framing. The reasoning is in the README: discovery risk, false
+   under any framing. The reasoning is in DECISIONS.md: discovery risk, false
    precision, and the fact that a false negative wearing an authoritative
    badge is the dangerous output. A stored per-object grade is the thing this
    design exists to prevent.
@@ -65,7 +65,7 @@ a human then reads.
 This matters more than it sounds. Seven live runs found two real bugs that
 every offline test passed: a sentence-counting defect that read the period in
 `Cordes, H.` as a sentence end, and an Italian response that carried uncited
-period background. Every row of the run table in the README is a regression
+period background. Every row of the run table in `scripts/VALIDATION.md` is a regression
 that a plausible-looking change introduced.
 
 So: **after changing `src/llm_guard.py`, `src/llm_client.py`,
@@ -83,7 +83,7 @@ n=12 per language, where a single output moved the number by eight points and
 made noise look like regression.
 
 CI enforces a proxy for this, not the thing itself: a pull request touching
-those files must also touch `README.md`, so the run table moves with the
+those files must also touch `scripts/VALIDATION.md`, so the run table moves with the
 guard. It cannot tell whether the run happened — only whether a human wrote
 down that it did.
 

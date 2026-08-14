@@ -443,6 +443,26 @@ class EntryKindTests(unittest.TestCase):
         outcome = match_entry(("Lange",), lange.terms, lange.person_forms, lange.entry_kind)
         self.assertIn("names an individual", outcome.note)
 
+    def test_the_kind_reaches_the_flag_even_when_the_match_is_confident(self):
+        # It was surfaced only through the identity caveat, which a confident
+        # match does not carry — so the field was invisible in the demo, which
+        # is the one place a reader actually looks.
+        from src.csv_adapter import load_chains
+        from src.heuristics import build_config, screen_object
+
+        seen = {}
+        config = build_config()
+        for chain in load_chains("examples/example_input.csv"):
+            result = screen_object(chain, config)
+            for flag in (
+                result["persecution_context_flags"] + result["name_list_citations"]
+            ):
+                if flag["rule_id"] in ("NM-001", "NM-002", "PC-005"):
+                    seen[flag["rule_id"]] = flag["cited_fields"].get("entry_kind")
+        self.assertTrue(seen, "the example exercises no reference-list match")
+        for rule_id, kind in seen.items():
+            self.assertIn(kind, name_matching.ENTRY_KINDS, rule_id)
+
     def test_the_kind_does_not_change_whether_something_matches(self):
         # It governs wording only. Confidence is still decided by whether the
         # entry knows any individual by that name.

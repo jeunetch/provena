@@ -1,5 +1,15 @@
 # Build Prompt: Open-Source Provenance Triage Tool
 
+> **This is the build specification, not the methodology document.** It is the
+> living source of truth for implementation decisions and it is long on
+> purpose.
+>
+> A provenance researcher or a lawyer evaluating the tool should read
+> **README.md**, which is written to be readable in one sitting without any of
+> the build narrative. Why a decision was taken is in **DECISIONS.md**, keyed
+> by decision rather than by date. The live-validation run record is in
+> **scripts/VALIDATION.md**, next to the harness that produces it.
+
 ## Context
 Standalone, self-hostable, open-source tool for cultural institutions (museums, foundations, galleries) to **triage** collection records for Nazi-era provenance risk — surfacing which objects need a human researcher's attention and why, never determining or scoring whether an object is "clean" or "looted." Built for Swiss Prototype Fund application (Responsible & Sustainable AI category). Not tied to any client's specific schema or infrastructure.
 
@@ -363,6 +373,15 @@ Rule 3 now has a second limb: a record whose own `transaction_state` is `entzieh
 **Switzerland made this structural rather than incidental.** The onset table has no Swiss window and correctly never will, so every Swiss record was unreachable — including every `fluchtgut` record, the category this spec names as directly relevant to the project's home jurisdiction. `fluchtgut` is deliberately *not* in limb 2: it is a contested category, not a presumption, and it now has its own criterion **PC-010** which asserts no tier and states the question. **The characterisation itself is a modelling decision, not a cited source** — that Swiss practice has historically distinguished fluchtgut from property taken in occupied territory comes from this specification's own framing, and it is load-bearing, because it is the reason fluchtgut asserts no tier while the four other persecution states engage one. It is listed alongside the Italy windows, the actor-list gate and the circa margin in the README's *Modelling decisions that need expert confirmation* section, so a reviewer finds it without having to trigger the rule.
 
 The generalised audit is now a test: every state in the enum that evidences persecution must reach a flag from a record that states it and nothing else, and the neutral states must still reach nothing. A state in the enum that no rule consumes is a field a curator can fill in correctly and get nothing for.
+
+**The documentation was split, 2026-08-14.** External review made the point that 100 KB of build narrative against ~4,600 lines of source is a liability rather than an asset: the audience this project names — a provenance researcher, an admitted lawyer, a Prototype Fund reviewer — had to read all of it to find fourteen rules, and the largest section of the README described seven live-validation runs of a layer that is off by default and absent from the demo. The sharper form of the point was that three defects in a row were places where the docs asserted a property confidently and the code did not have it; a reviewer who spot-checks two claims and finds both overstated stops trusting the other eighty.
+
+The split, on the acceptance test that a provenance researcher can evaluate the methodology in one sitting without reading anything about how it was built:
+
+- **README.md** — what it does, the criteria, the schema, the limitations, the disclaimer. The *modelling decisions that need expert confirmation* list moved near the top, because it is the shortest honest answer to "what would a researcher need to check first", and it now carries four entries rather than three, all four transcription rather than citation, three of which change what the tool outputs.
+- **DECISIONS.md** — one heading per decision, keyed by decision and not by chronology. Git holds the chronology with better fidelity than prose, and someone asking why Italy is two windows should not have to scan seven live-run entries to find out.
+- **scripts/VALIDATION.md** — the run table and the guard's known gaps, next to the harness. CI's guard-change rule now keys on that file rather than on the README.
+- Claims with neither a test nor narrative value were **deleted, not moved**. A decisions document that accumulates unverified claims is just a place for them to keep existing; moving is the option that feels like work and isn't.
 
 **Decisions resolved 2026-08-14, after external review of the published repository.** The review's sharpest point was one this project had not made anywhere: **Apache 2.0's AS IS clause disclaims the author's liability, and does nothing for an institution that relies on the output and gets something wrong in a real restitution matter.** That is not a licensing problem — Apache 2.0 remains right — but it converts the outstanding legal and provenance-research review from a milestone into a precondition, and the README now says so in the status block and under the licence.
 

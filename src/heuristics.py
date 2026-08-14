@@ -1229,6 +1229,11 @@ def rule_confiscation_actors(
             cited = record.cite("owner_name", "date_span", "location", "transaction_state")
             cited["matched_on"] = matched_name
             cited["match_basis"] = outcome.basis
+            # Stated on every match, not only when a caveat fires: whether the
+            # entry names a person or an organisation is what tells a reader
+            # which sentence they are being told, and a confident match
+            # otherwise leaves it invisible.
+            cited["entry_kind"] = outcome.entry_kind
             cited["identity_confirmed"] = outcome.identity_confirmed
             if outcome.note:
                 cited["identity_caveat"] = outcome.note
@@ -1715,6 +1720,11 @@ def rule_aliu_name_match(
             cited = record.cite("owner_name", "owner_name_variants", "date_span")
             cited["matched_on"] = matched_name
             cited["match_basis"] = outcome.basis
+            # Stated on every match, not only when a caveat fires: whether the
+            # entry names a person or an organisation is what tells a reader
+            # which sentence they are being told, and a confident match
+            # otherwise leaves it invisible.
+            cited["entry_kind"] = outcome.entry_kind
             cited["identity_confirmed"] = outcome.identity_confirmed
             if outcome.note:
                 cited["identity_caveat"] = outcome.note
