@@ -579,10 +579,28 @@ def _pre_1945_status(chain: ObjectChain) -> tuple[bool, bool]:
     return possibly, certainly
 
 
-def rule_no_pre_1945_provenance(chain: ObjectChain) -> list[dict[str, object]]:
+def rule_no_pre_1945_provenance(
+    chain: ObjectChain,
+) -> tuple[list[dict[str, object]], str | None]:
+    """Returns (flags, note). The note explains a non-application.
+
+    An object created after the risk band cannot have pre-1945 provenance, so
+    reporting its absence says nothing about documentation — and it says it on
+    the coverage map, which is the first screen. Where the creation date is
+    absent the rule still runs: an unrecorded date is not evidence the object
+    is modern, and disabling the modal rule on a blank column would be the
+    silent false negative this project is built to avoid.
+    """
     possibly, _ = _pre_1945_status(chain)
     if possibly:
-        return []
+        return [], None
+    if chain.certainly_created_after(PRE_1945_THRESHOLD):
+        return [], (
+            f"{RULE_PC_001} not applicable: the object's recorded creation date "
+            f"({chain.object_date}) is on or after "
+            f"{PRE_1945_THRESHOLD.isoformat()}, so it cannot have provenance "
+            f"before then. This is not a finding about documentation."
+        )
     dated = chain.dated_records
     cited = {
         "records_in_chain": len(chain.records),
@@ -594,13 +612,29 @@ def rule_no_pre_1945_provenance(chain: ObjectChain) -> list[dict[str, object]]:
             r.source_ref for r in chain.records if not r.is_dated
         ],
         "threshold": PRE_1945_THRESHOLD.isoformat(),
+        "object_date": chain.object_date,
     }
+    # Two different findings, and the difference is exactly what the creation
+    # date settles. Without it the rule cannot separate "the documentation is
+    # missing" from "the object was created later and never had any".
+    if chain.object_date:
+        qualifier = (
+            f" The object's recorded creation date is {chain.object_date}, so it "
+            f"could have had an owner before then."
+        )
+    else:
+        qualifier = (
+            " No creation date is recorded for the object, so this finding "
+            "cannot distinguish an object whose early provenance is "
+            "undocumented from one that was created after 1945 and never had "
+            "any. Record `object_date` to separate the two."
+        )
     statement = (
         "Unverified: is there any documentation of ownership before 1945? No "
         "record in the supplied chain is dated, even allowing for its stated "
-        "date precision, before 1 January 1945."
+        "date precision, before 1 January 1945." + qualifier
     )
-    return [_flag(RULE_PC_001, statement, cited, PresumptionTier.NOT_APPLICABLE)]
+    return [_flag(RULE_PC_001, statement, cited, PresumptionTier.NOT_APPLICABLE)], None
 
 
 # --------------------------------------------------------------------------
@@ -1523,7 +1557,10 @@ def screen_object(chain: ObjectChain, config: ScreeningConfig) -> dict[str, obje
     coverage: list[str] = []
     table = config.onset_table
 
-    persecution_flags = list(rule_no_pre_1945_provenance(chain))
+    pc_001_flags, pc_001_note = rule_no_pre_1945_provenance(chain)
+    persecution_flags = list(pc_001_flags)
+    if pc_001_note:
+        coverage.append(pc_001_note)
 
     acquisition_flags, acquisition_skip = rule_chain_begins_at_acquisition(chain)
     persecution_flags.extend(acquisition_flags)
@@ -1637,13 +1674,22 @@ def coverage_map(
     begins_at_acquisition = 0
     acquisition_undeterminable = 0
     previously_resolved = 0
+    created_after_band = 0
+    creation_date_unrecorded = 0
 
     for chain, result in zip(chains, results):
         possibly, certainly = _pre_1945_status(chain)
+        if not chain.object_date:
+            creation_date_unrecorded += 1
         if possibly:
             with_pre_1945 += 1
             if certainly:
                 certain_pre_1945 += 1
+        elif chain.certainly_created_after(PRE_1945_THRESHOLD):
+            # Counted apart from `with_no_pre_1945_provenance`: an object that
+            # postdates the band has nothing missing, and folding it into the
+            # gap count overstates the gap on the first screen.
+            created_after_band += 1
         else:
             without_pre_1945 += 1
         if any(
@@ -1660,6 +1706,8 @@ def coverage_map(
         "with_any_pre_1945_provenance": with_pre_1945,
         "of_which_certainly_dated_pre_1945": certain_pre_1945,
         "with_no_pre_1945_provenance": without_pre_1945,
+        "created_after_the_risk_band": created_after_band,
+        "creation_date_not_recorded": creation_date_unrecorded,
         "chain_begins_at_institutional_acquisition": begins_at_acquisition,
         "institutional_acquisition_not_determinable": acquisition_undeterminable,
         "previously_resolved": previously_resolved,
@@ -1667,6 +1715,11 @@ def coverage_map(
             "Counts describe how much documentation exists, not how much risk. "
             "`institutional_acquisition_not_determinable` counts objects whose "
             "records do not mark which event is the institution's own accession, "
-            "so that criterion could not run."
+            "so that criterion could not run. `created_after_the_risk_band` "
+            "counts objects whose own recorded creation date puts them after "
+            "1945 — they are not missing documentation, they could not have "
+            "any, and they are excluded from `with_no_pre_1945_provenance` for "
+            "that reason. `creation_date_not_recorded` counts the objects for "
+            "which that distinction could not be made at all."
         ),
     }

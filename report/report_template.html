@@ -350,11 +350,12 @@ footer li { margin-bottom: .25rem; }
   var tiles = document.getElementById("tiles");
   [["objects_processed", "objects processed"],
    ["with_no_pre_1945_provenance", "with no pre-1945 provenance"],
+   ["created_after_the_risk_band", "created after 1945 (could not have any)"],
    ["chain_begins_at_institutional_acquisition", "chains beginning at accession"],
    ["institutional_acquisition_not_determinable", "accession not identifiable in the record"],
    ["previously_resolved", "previously resolved"]].forEach(function (pair) {
     var t = el("div", "tile");
-    t.appendChild(el("div", "n", cm[pair[0]]));
+    t.appendChild(el("div", "n", cm[pair[0]] === undefined ? "–" : cm[pair[0]]));
     t.appendChild(el("div", "k", pair[1]));
     tiles.appendChild(t);
   });

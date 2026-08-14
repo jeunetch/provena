@@ -341,6 +341,10 @@ class ProvenanceRecord:
     source_order: int
     object_title: str | None = None
     object_class: str | None = None
+    # The object's own creation/production date, YYYY[-MM[-DD]]. Optional, and
+    # its absence is a distinct state from a pre-1945 value — see
+    # `certainly_created_after_risk_band`.
+    object_date: str | None = None
     owner_name_variants: list[str] = field(default_factory=list)
     date_from: str | None = None
     date_to: str | None = None
@@ -397,6 +401,7 @@ FIELD_NAMES = (
     "object_id",
     "object_title",
     "object_class",
+    "object_date",
     "owner_name",
     "owner_name_variants",
     "date_from",
@@ -475,6 +480,13 @@ def build_record(
     except ValueError as exc:
         problems.append(str(exc))
 
+    object_date = text("object_date")
+    if object_date is not None:
+        try:
+            _parse_partial(object_date)
+        except ValueError as exc:
+            problems.append(f"object_date: {exc}")
+
     transaction_state = None
     try:
         transaction_state = parse_transaction_state(text("transaction_state"))
@@ -523,6 +535,7 @@ def build_record(
         source_order=source_order,
         object_title=text("object_title"),
         object_class=text("object_class"),
+        object_date=object_date,
         owner_name_variants=split_variants(text("owner_name_variants")),
         date_from=text("date_from"),
         date_to=text("date_to"),
@@ -562,6 +575,30 @@ class ObjectChain:
     @property
     def object_class(self) -> str | None:
         return next((r.object_class for r in self.records if r.object_class), None)
+
+    @property
+    def object_date(self) -> str | None:
+        """The object's own creation date, first non-empty value in the chain."""
+        return next((r.object_date for r in self.records if r.object_date), None)
+
+    def certainly_created_after(self, threshold: date) -> bool:
+        """Whether the object certainly did not exist before `threshold`.
+
+        Precision is read from the granularity of the value, and only the
+        EARLIEST possible day counts: "1946" means some time in 1946, so the
+        object certainly postdates 1945 because 1 January 1946 does. A blank
+        creation date returns False — an unrecorded date is not evidence the
+        object is modern, and treating it as such would switch off the rule
+        this feeds for every file that omits the column.
+        """
+        raw = self.object_date
+        if not raw:
+            return False
+        try:
+            parts = _parse_partial(raw)
+        except ValueError:
+            return False
+        return _start_of(parts) >= threshold
 
     @property
     def dated_records(self) -> list[ProvenanceRecord]:

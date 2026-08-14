@@ -46,6 +46,7 @@ Two-layer classification:
 
 - `object_id` (string, required)
 - `object_title` (string, optional)
+- `object_date` (string, optional — the object's own creation date, `YYYY[-MM[-DD]]`. **Added 2026-08-14 after external review.** Rule 1 fires whenever nothing in the chain predates 1945, which for an object created in 1962 is correct by the rule and useless in practice — and it lands on the coverage map, the first screen. Where the recorded creation date is on or after 1945 the rule reports itself *not applicable* with the reason; where it is blank the rule still runs, because an unrecorded date is not evidence the object is modern and disabling the modal rule on an empty column is the silent false negative this spec exists to prevent. The coverage map counts `created_after_the_risk_band` and `creation_date_not_recorded` separately from `with_no_pre_1945_provenance`. Precision is granularity-derived and only the earliest possible day counts.)
 - `object_class` (string, optional but strongly recommended — e.g. "painting", "silver", "Judaica", "decorative art", "coin". Drives object-type-specific rules; see Heuristic Layer)
 - `owner_name` (string, required)
 - `owner_name_variants` (list of strings, optional — alternate spellings/transliterations; matching must account for these or it will miss most of what it should catch, per expert review)

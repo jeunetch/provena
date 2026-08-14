@@ -1,56 +1,56 @@
-object_id,object_title,object_class,owner_name,owner_name_variants,date_from,date_to,date_precision,transaction_state,location,source_citation,export_licence_present,is_institution_acquisition,catalogue_reference,owner_stated_in_catalogue,restitution_recipient_type,notes
-OBJ-001,Landscape with Two Figures,painting,"Almqvist, H.","Almquist, H.|H. Almqvist",1921,,year,purchase,"Munich, Germany","Dealer stockbook 1921, fol. 44",,,,,,
-OBJ-001,Landscape with Two Figures,painting,Auktionshaus Steinbach,,1936-11-04,,exact,zwangsverkauf,"Munich, Germany","Auction catalogue, 4 Nov 1936, lot 210",false,,,,,Consignor not named in the catalogue.
-OBJ-001,Landscape with Two Figures,painting,Municipal Art Collection,,1953,,year,purchase,"Bern, Switzerland","Accession register 1953, no. 12",,true,,,,
-OBJ-002,Portrait of a Woman,painting,Municipal Art Collection,,1962,,year,purchase,"Bern, Switzerland","Accession register 1962, no. 88",,true,,,,No prior owner recorded in the accession file.
-OBJ-003,Still Life with Jug,painting,"Berglund, M.",,1938,,circa,unknown,"Vienna, Austria","Exhibition catalogue 1962, p. 31 (provenance note, source undated)",,,,,,
-OBJ-003,Still Life with Jug,painting,Municipal Art Collection,,1957,,year,purchase,"Bern, Switzerland",,,true,,,,Vendor file missing.
-OBJ-004,Beaker with Lid,silver,"Cordes, H.",,1934-06,,month,vermutung_der_entziehung,"Berlin, Germany","Estate inventory 1934, item 7",,,,,,
-OBJ-004,Beaker with Lid,silver,Auktionshaus Steinbach,,1935,1936,year,unknown,"Berlin, Germany",,,,,,,Consignment date recorded only as a range.
-OBJ-004,Beaker with Lid,silver,Municipal Art Collection,,1968,,year,purchase,"Bern, Switzerland","Accession register 1968, no. 4",,true,,,,
-OBJ-005,Harbour at Dusk,drawing,"Dettwiler, R.",,1939-05-20,,exact,zwangsverkauf,"Vienna, Austria","Restitution file 1949, encl. 3",,,,,,
-OBJ-005,Harbour at Dusk,drawing,Estate of R. Dettwiler,,1949-03-02,,exact,restitution_erfolgt_or_vergleich,"Vienna, Austria","Restitution file 1949, decision of 2 Mar 1949",,,,,,Settled; recorded here so the object is not re-flagged as open.
-OBJ-005,Harbour at Dusk,drawing,Municipal Art Collection,,1951,,year,purchase,"Bern, Switzerland","Accession register 1951, no. 30",,true,,,,
-OBJ-006,Study of Hands,drawing,"Nordwind, J.",,1889,,year,purchase,"Copenhagen, Denmark","Collection catalogue 1889, no. 61",,,,,,
-OBJ-006,Study of Hands,drawing,Municipal Art Collection,,1901,,year,gift,"Bern, Switzerland","Accession register 1901, no. 3",,true,,,,
-OBJ-007,Seated Figure,sculpture,Private collection,,,1940,before,unknown,"Amsterdam, Netherlands",,,,,,,Recorded only as 'before 1940' in the vendor's note.
-OBJ-007,Seated Figure,sculpture,Municipal Art Collection,,1946,,after,purchase,"Bern, Switzerland",Accession register (undated entry),,,,,,Acquisition year recorded only as 'after 1946'.
-OBJ-008,Ornamental Casket,decorative art,unknown,,,,,unknown,,,,,,,,No provenance recorded before the 1954 purchase.
-OBJ-008,Ornamental Casket,decorative art,Municipal Art Collection,,1954,,year,purchase,"Bern, Switzerland","Accession register 1954, no. 71",,true,,,,
-OBJ-009,Panel with Saints,painting,"Ferrini, L.",,1940,,year,unknown,"Rome, Italy","Dealer invoice 1940, no. 12",,,,,,
-OBJ-009,Panel with Saints,painting,Auktionshaus Steinbach,,1944-02-11,,exact,zwangsverkauf,"Rome, Italy","Auction catalogue, 11 Feb 1944, lot 63",,,,,,
-OBJ-009,Panel with Saints,painting,Municipal Art Collection,,1971,,year,purchase,"Bern, Switzerland","Accession register 1971, no. 15",,true,,,,
-OBJ-010,Two Studies of a Horse,drawing,"Halvorsen, E.",,1933-06,,month,vermutung_der_entziehung,"Berlin, Germany","Estate inventory 1933, item 22",,,,,,
-OBJ-010,Two Studies of a Horse,drawing,Municipal Art Collection,,1966,,year,purchase,"Bern, Switzerland","Accession register 1966, no. 9",,true,,,,
-OBJ-011,Coastal Sketch,drawing,"Vestergaard, K.",,1875,,year,purchase,"Copenhagen, Denmark",,,,,,,
-OBJ-011,Coastal Sketch,drawing,Municipal Art Collection,,1902,,year,gift,"Bern, Switzerland","Accession register 1902, no. 41",,true,,,,
-OBJ-012,Woman Reading,painting,"Lindqvist, A.",,1928,,year,purchase,"Copenhagen, Denmark","Catalogue raisonne, 1928 edn, no. 214",,,"Catalogue raisonne, 1928 edn, no. 214",true,,
-OBJ-012,Woman Reading,painting,not recorded,,1961,,year,unknown,"Copenhagen, Denmark","Revised catalogue raisonne, 1961 edn, no. 198",,,"Revised catalogue raisonne, 1961 edn, no. 198",false,,Owner named in the 1928 edition is absent from this entry.
-OBJ-012,Woman Reading,painting,Municipal Art Collection,,1972,,year,purchase,"Bern, Switzerland","Accession register 1972, no. 5",,true,,,,
-OBJ-013,Bowl with Grapes,painting,"Ostergaard, P.",,1930,,year,purchase,"Copenhagen, Denmark","Catalogue raisonne, 1930 edn, no. 77",,,"Catalogue raisonne, 1930 edn, no. 77",true,,
-OBJ-013,Bowl with Grapes,painting,Private collection,,1955,,year,purchase,"Zurich, Switzerland","Dealer correspondence, 1955",,,,,,"Anonymous entry, but dated outside the 1933-1950 band."
-OBJ-013,Bowl with Grapes,painting,Municipal Art Collection,,1958,,year,purchase,"Bern, Switzerland","Accession register 1958, no. 19",,true,,,,
-OBJ-014,Head of a Youth,sculpture,"Rasmussen, T.",,1938-09-14,,exact,zwangsverkauf,"Vienna, Austria","Restitution file 1950, encl. 1",,,,,,
-OBJ-014,Head of a Youth,sculpture,Republic of Austria,,1950-06-01,,exact,restitution_erfolgt_or_vergleich,"Vienna, Austria","Restitution file 1950, decision of 1 Jun 1950",,,,,state_or_institution,"Recorded as restituted to the state, not to named heirs."
-OBJ-014,Head of a Youth,sculpture,Municipal Art Collection,,1953,,year,purchase,"Bern, Switzerland","Accession register 1953, no. 44",,true,,,,
-OBJ-015,Winter Field,painting,"Aaltonen, S.",,1939,,year,zwangsverkauf,"Berlin, Germany","Restitution file 1952, encl. 2",,,,,,
-OBJ-015,Winter Field,painting,Heirs of S. Aaltonen,,1952-04-18,,exact,restitution_erfolgt_or_vergleich,"Berlin, Germany","Restitution file 1952, decision of 18 Apr 1952",,,,,individual_or_heirs,Settled with the named heirs directly.
-OBJ-016,Riverbank,painting,"Neumann, G.",,1936,,year,purchase,"Berlin, Germany","Dealer stockbook 1936, fol. 12",,,,,,
-OBJ-016,Riverbank,painting,Galerie Nordwind,,1939,,year,unknown,"Basel, Switzerland","Gallery daybook 1939, p. 8",,,,,,Cross-border movement; no export licence in the file.
-OBJ-016,Riverbank,painting,Municipal Art Collection,,1962,,year,purchase,"Bern, Switzerland","Accession register 1962, no. 21",,true,,,,
-OBJ-017,Orchard Path,,"Bervoets, J.",,1937,,year,purchase,"Paris, France","Dealer invoice 1937, no. 30",,,,,,
-OBJ-017,Orchard Path,,Galerie Nordwind,,1938,,year,purchase,"Bern, Switzerland","Gallery daybook 1938, p. 41",true,,,,,Export licence on file for the 1938 movement.
-OBJ-017,Orchard Path,,Municipal Art Collection,,1964,,year,purchase,"Bern, Switzerland","Accession register 1964, no. 7",,true,,,,
-OBJ-018,Standing Figure,sculpture,Municipal Art Collection,,2005,,year,purchase,"Bern, Switzerland","Accession register 2005, no. 2",,true,,,,No prior owner recorded in the accession file.
-OBJ-019,Harbour Wall,painting,"Sandberg, I.",,1910,,year,purchase,"Copenhagen, Denmark","Collection catalogue 1910, no. 12",,,,,,
-OBJ-019,Harbour Wall,painting,Municipal Art Collection,,2003,,year,purchase,"Bern, Switzerland","Accession register 2003, no. 88",,true,,,,
-OBJ-020,Still Life with Pears,painting,Galerie Fischer Lucerne,,1941,,year,purchase,"Lucerne, Switzerland","Gallery daybook 1941, p. 3",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
-OBJ-020,Still Life with Pears,painting,Municipal Art Collection,,1965,,year,purchase,"Bern, Switzerland","Accession register 1965, no. 12",,true,,,,
-OBJ-021,Portrait of a Notary,painting,Kunsthaus Lempertz,,1942,,year,purchase,"Cologne, Germany","Auction catalogue 1942, lot 51",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
-OBJ-021,Portrait of a Notary,painting,Municipal Art Collection,,1967,,year,purchase,"Bern, Switzerland","Accession register 1967, no. 30",,true,,,,
-OBJ-022,Silver Ewer,silver,Dorotheum,,1943,,year,purchase,"Vienna, Austria","Auction catalogue 1943, lot 204",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
-OBJ-022,Silver Ewer,silver,Municipal Art Collection,,1969,,year,purchase,"Bern, Switzerland","Accession register 1969, no. 8",,true,,,,
-OBJ-023,Landscape with Mill,painting,"Haberstock, Karl",Karl Haberstock,1940,,year,purchase,"Berlin, Germany","Dealer stockbook 1940, fol. 9",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
-OBJ-023,Landscape with Mill,painting,Municipal Art Collection,,1973,,year,purchase,"Bern, Switzerland","Accession register 1973, no. 61",,true,,,,
-OBJ-024,Drawing of a Cloister,drawing,"Wolff Metternich, Franz",Graf Wolff-Metternich,1942,,year,purchase,"Bern, Switzerland","Correspondence file 1942, no. 4",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
-OBJ-024,Drawing of a Cloister,drawing,Municipal Art Collection,,1975,,year,purchase,"Bern, Switzerland","Accession register 1975, no. 2",,true,,,,
+object_id,object_title,object_class,object_date,owner_name,owner_name_variants,date_from,date_to,date_precision,transaction_state,location,source_citation,export_licence_present,is_institution_acquisition,catalogue_reference,owner_stated_in_catalogue,restitution_recipient_type,notes
+OBJ-001,Landscape with Two Figures,painting,,"Almqvist, H.","Almquist, H.|H. Almqvist",1921,,year,purchase,"Munich, Germany","Dealer stockbook 1921, fol. 44",,,,,,
+OBJ-001,Landscape with Two Figures,painting,,Auktionshaus Steinbach,,1936-11-04,,exact,zwangsverkauf,"Munich, Germany","Auction catalogue, 4 Nov 1936, lot 210",false,,,,,Consignor not named in the catalogue.
+OBJ-001,Landscape with Two Figures,painting,,Municipal Art Collection,,1953,,year,purchase,"Bern, Switzerland","Accession register 1953, no. 12",,true,,,,
+OBJ-002,Portrait of a Woman,painting,,Municipal Art Collection,,1962,,year,purchase,"Bern, Switzerland","Accession register 1962, no. 88",,true,,,,No prior owner recorded in the accession file.
+OBJ-003,Still Life with Jug,painting,,"Berglund, M.",,1938,,circa,unknown,"Vienna, Austria","Exhibition catalogue 1962, p. 31 (provenance note, source undated)",,,,,,
+OBJ-003,Still Life with Jug,painting,,Municipal Art Collection,,1957,,year,purchase,"Bern, Switzerland",,,true,,,,Vendor file missing.
+OBJ-004,Beaker with Lid,silver,,"Cordes, H.",,1934-06,,month,vermutung_der_entziehung,"Berlin, Germany","Estate inventory 1934, item 7",,,,,,
+OBJ-004,Beaker with Lid,silver,,Auktionshaus Steinbach,,1935,1936,year,unknown,"Berlin, Germany",,,,,,,Consignment date recorded only as a range.
+OBJ-004,Beaker with Lid,silver,,Municipal Art Collection,,1968,,year,purchase,"Bern, Switzerland","Accession register 1968, no. 4",,true,,,,
+OBJ-005,Harbour at Dusk,drawing,,"Dettwiler, R.",,1939-05-20,,exact,zwangsverkauf,"Vienna, Austria","Restitution file 1949, encl. 3",,,,,,
+OBJ-005,Harbour at Dusk,drawing,,Estate of R. Dettwiler,,1949-03-02,,exact,restitution_erfolgt_or_vergleich,"Vienna, Austria","Restitution file 1949, decision of 2 Mar 1949",,,,,,Settled; recorded here so the object is not re-flagged as open.
+OBJ-005,Harbour at Dusk,drawing,,Municipal Art Collection,,1951,,year,purchase,"Bern, Switzerland","Accession register 1951, no. 30",,true,,,,
+OBJ-006,Study of Hands,drawing,,"Nordwind, J.",,1889,,year,purchase,"Copenhagen, Denmark","Collection catalogue 1889, no. 61",,,,,,
+OBJ-006,Study of Hands,drawing,,Municipal Art Collection,,1901,,year,gift,"Bern, Switzerland","Accession register 1901, no. 3",,true,,,,
+OBJ-007,Seated Figure,sculpture,,Private collection,,,1940,before,unknown,"Amsterdam, Netherlands",,,,,,,Recorded only as 'before 1940' in the vendor's note.
+OBJ-007,Seated Figure,sculpture,,Municipal Art Collection,,1946,,after,purchase,"Bern, Switzerland",Accession register (undated entry),,,,,,Acquisition year recorded only as 'after 1946'.
+OBJ-008,Ornamental Casket,decorative art,,unknown,,,,,unknown,,,,,,,,No provenance recorded before the 1954 purchase.
+OBJ-008,Ornamental Casket,decorative art,,Municipal Art Collection,,1954,,year,purchase,"Bern, Switzerland","Accession register 1954, no. 71",,true,,,,
+OBJ-009,Panel with Saints,painting,,"Ferrini, L.",,1940,,year,unknown,"Rome, Italy","Dealer invoice 1940, no. 12",,,,,,
+OBJ-009,Panel with Saints,painting,,Auktionshaus Steinbach,,1944-02-11,,exact,zwangsverkauf,"Rome, Italy","Auction catalogue, 11 Feb 1944, lot 63",,,,,,
+OBJ-009,Panel with Saints,painting,,Municipal Art Collection,,1971,,year,purchase,"Bern, Switzerland","Accession register 1971, no. 15",,true,,,,
+OBJ-010,Two Studies of a Horse,drawing,,"Halvorsen, E.",,1933-06,,month,vermutung_der_entziehung,"Berlin, Germany","Estate inventory 1933, item 22",,,,,,
+OBJ-010,Two Studies of a Horse,drawing,,Municipal Art Collection,,1966,,year,purchase,"Bern, Switzerland","Accession register 1966, no. 9",,true,,,,
+OBJ-011,Coastal Sketch,drawing,,"Vestergaard, K.",,1875,,year,purchase,"Copenhagen, Denmark",,,,,,,
+OBJ-011,Coastal Sketch,drawing,,Municipal Art Collection,,1902,,year,gift,"Bern, Switzerland","Accession register 1902, no. 41",,true,,,,
+OBJ-012,Woman Reading,painting,,"Lindqvist, A.",,1928,,year,purchase,"Copenhagen, Denmark","Catalogue raisonne, 1928 edn, no. 214",,,"Catalogue raisonne, 1928 edn, no. 214",true,,
+OBJ-012,Woman Reading,painting,,not recorded,,1961,,year,unknown,"Copenhagen, Denmark","Revised catalogue raisonne, 1961 edn, no. 198",,,"Revised catalogue raisonne, 1961 edn, no. 198",false,,Owner named in the 1928 edition is absent from this entry.
+OBJ-012,Woman Reading,painting,,Municipal Art Collection,,1972,,year,purchase,"Bern, Switzerland","Accession register 1972, no. 5",,true,,,,
+OBJ-013,Bowl with Grapes,painting,,"Ostergaard, P.",,1930,,year,purchase,"Copenhagen, Denmark","Catalogue raisonne, 1930 edn, no. 77",,,"Catalogue raisonne, 1930 edn, no. 77",true,,
+OBJ-013,Bowl with Grapes,painting,,Private collection,,1955,,year,purchase,"Zurich, Switzerland","Dealer correspondence, 1955",,,,,,"Anonymous entry, but dated outside the 1933-1950 band."
+OBJ-013,Bowl with Grapes,painting,,Municipal Art Collection,,1958,,year,purchase,"Bern, Switzerland","Accession register 1958, no. 19",,true,,,,
+OBJ-014,Head of a Youth,sculpture,,"Rasmussen, T.",,1938-09-14,,exact,zwangsverkauf,"Vienna, Austria","Restitution file 1950, encl. 1",,,,,,
+OBJ-014,Head of a Youth,sculpture,,Republic of Austria,,1950-06-01,,exact,restitution_erfolgt_or_vergleich,"Vienna, Austria","Restitution file 1950, decision of 1 Jun 1950",,,,,state_or_institution,"Recorded as restituted to the state, not to named heirs."
+OBJ-014,Head of a Youth,sculpture,,Municipal Art Collection,,1953,,year,purchase,"Bern, Switzerland","Accession register 1953, no. 44",,true,,,,
+OBJ-015,Winter Field,painting,,"Aaltonen, S.",,1939,,year,zwangsverkauf,"Berlin, Germany","Restitution file 1952, encl. 2",,,,,,
+OBJ-015,Winter Field,painting,,Heirs of S. Aaltonen,,1952-04-18,,exact,restitution_erfolgt_or_vergleich,"Berlin, Germany","Restitution file 1952, decision of 18 Apr 1952",,,,,individual_or_heirs,Settled with the named heirs directly.
+OBJ-016,Riverbank,painting,,"Neumann, G.",,1936,,year,purchase,"Berlin, Germany","Dealer stockbook 1936, fol. 12",,,,,,
+OBJ-016,Riverbank,painting,,Galerie Nordwind,,1939,,year,unknown,"Basel, Switzerland","Gallery daybook 1939, p. 8",,,,,,Cross-border movement; no export licence in the file.
+OBJ-016,Riverbank,painting,,Municipal Art Collection,,1962,,year,purchase,"Bern, Switzerland","Accession register 1962, no. 21",,true,,,,
+OBJ-017,Orchard Path,,,"Bervoets, J.",,1937,,year,purchase,"Paris, France","Dealer invoice 1937, no. 30",,,,,,
+OBJ-017,Orchard Path,,,Galerie Nordwind,,1938,,year,purchase,"Bern, Switzerland","Gallery daybook 1938, p. 41",true,,,,,Export licence on file for the 1938 movement.
+OBJ-017,Orchard Path,,,Municipal Art Collection,,1964,,year,purchase,"Bern, Switzerland","Accession register 1964, no. 7",,true,,,,
+OBJ-018,Standing Figure,sculpture,1998,Municipal Art Collection,,2005,,year,purchase,"Bern, Switzerland","Accession register 2005, no. 2",,true,,,,No prior owner recorded in the accession file.
+OBJ-019,Harbour Wall,painting,1905,"Sandberg, I.",,1910,,year,purchase,"Copenhagen, Denmark","Collection catalogue 1910, no. 12",,,,,,
+OBJ-019,Harbour Wall,painting,1905,Municipal Art Collection,,2003,,year,purchase,"Bern, Switzerland","Accession register 2003, no. 88",,true,,,,
+OBJ-020,Still Life with Pears,painting,,Galerie Fischer Lucerne,,1941,,year,purchase,"Lucerne, Switzerland","Gallery daybook 1941, p. 3",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
+OBJ-020,Still Life with Pears,painting,,Municipal Art Collection,,1965,,year,purchase,"Bern, Switzerland","Accession register 1965, no. 12",,true,,,,
+OBJ-021,Portrait of a Notary,painting,,Kunsthaus Lempertz,,1942,,year,purchase,"Cologne, Germany","Auction catalogue 1942, lot 51",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
+OBJ-021,Portrait of a Notary,painting,,Municipal Art Collection,,1967,,year,purchase,"Bern, Switzerland","Accession register 1967, no. 30",,true,,,,
+OBJ-022,Silver Ewer,silver,,Dorotheum,,1943,,year,purchase,"Vienna, Austria","Auction catalogue 1943, lot 204",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
+OBJ-022,Silver Ewer,silver,,Municipal Art Collection,,1969,,year,purchase,"Bern, Switzerland","Accession register 1969, no. 8",,true,,,,
+OBJ-023,Landscape with Mill,painting,,"Haberstock, Karl",Karl Haberstock,1940,,year,purchase,"Berlin, Germany","Dealer stockbook 1940, fol. 9",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
+OBJ-023,Landscape with Mill,painting,,Municipal Art Collection,,1973,,year,purchase,"Bern, Switzerland","Accession register 1973, no. 61",,true,,,,
+OBJ-024,Drawing of a Cloister,drawing,,"Wolff Metternich, Franz",Graf Wolff-Metternich,1942,,year,purchase,"Bern, Switzerland","Correspondence file 1942, no. 4",,,,,,"Synthetic demonstration row. The object, the transaction and the dates are invented; the party name is taken from the bundled reference list only so the matching rule can be demonstrated. No conduct is asserted."
+OBJ-024,Drawing of a Cloister,drawing,,Municipal Art Collection,,1975,,year,purchase,"Bern, Switzerland","Accession register 1975, no. 2",,true,,,,

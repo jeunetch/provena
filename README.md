@@ -98,6 +98,38 @@ annotation, never as a characterization.
 | Criteria | the full v1 rule set (12 rules, 13 rule IDs — see below) |
 | Output | JSON + static HTML report: coverage map first, work queue second |
 
+### `object_date`, and what PC-001 can and cannot tell you
+
+`object_date` is the object's own creation date (`YYYY`, `YYYY-MM` or
+`YYYY-MM-DD`), optional, and it changes what PC-001 means.
+
+PC-001 fires when nothing in the chain predates 1945. For an object *created*
+in 1962 that is correct by the rule and useless in practice, and it lands on
+the coverage map — the first screen, the thing this README calls more
+diagnostic than any per-object output. A mixed collection otherwise reports
+"N objects with no pre-1945 provenance" where a large share could not have
+had any.
+
+Three states, kept distinct:
+
+| `object_date` | PC-001 | coverage map |
+|---|---|---|
+| on or after 1945 | not applicable, with the reason in `coverage_note` | counted under `created_after_the_risk_band` |
+| before 1945 | fires, and cites the creation date | counted under `with_no_pre_1945_provenance` |
+| blank | **still fires** | counted under `with_no_pre_1945_provenance` *and* `creation_date_not_recorded` |
+
+A blank creation date does not switch the rule off. An unrecorded date is not
+evidence the object is modern, and disabling the modal rule on an empty column
+is the silent false negative this tool exists to avoid — so the flag runs and
+says, in its own statement, that it cannot distinguish an object whose early
+provenance is undocumented from one created after 1945 that never had any.
+
+Precision is read from the value's granularity and only the earliest possible
+day counts: `1946` means some time in 1946, so the object certainly postdates
+1945. There is no separate precision field, so where creation is uncertain,
+record the earliest plausible year — the rule only steps aside when the object
+*certainly* postdates the band.
+
 | Rule | ID | Axis |
 |---|---|---|
 | No pre-1945 provenance at all | `PC-001` | persecution context |
@@ -129,6 +161,7 @@ local name, so the namespace prefix a file uses does not matter.
 | `object_id` | `lido:lidoRecID`, else `administrativeMetadata/recordWrap/recordID` |
 | `object_title` | `objectIdentificationWrap/titleWrap/titleSet/appellationValue` |
 | `object_class` | `objectClassificationWrap/objectWorkTypeWrap/objectWorkType/term` |
+| `object_date` | no native mapping — use `PROVENA_EXT:object_date=` |
 | `owner_name` | `eventActor/actorInRole/actor/nameActorSet/appellationValue` |
 | `owner_name_variants` | that actor's remaining `appellationValue`s |
 | `date_from` / `date_to` | `eventDate/date/earliestDate` and `latestDate` |
