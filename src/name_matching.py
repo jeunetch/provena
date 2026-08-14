@@ -49,6 +49,15 @@ DEFAULT_ACTORS_PATH = DATA_DIR / "confiscation_channel_actors.json"
 ENTRY_DOCUMENTED_CONCERN = "documented_concern"
 ENTRY_EXONERATING = "exonerating"
 
+# Whether an entry names an individual or an organisation. Declared in the
+# data files and never inferred: deriving it from the punctuation of a name is
+# a guess that has been wrong in both directions — once by treating a compound
+# surname as Given+Surname, once by telling a reader that an auction house
+# "names an individual". Six entries to annotate now; two thousand later.
+KIND_PERSON = "person"
+KIND_ORGANISATION = "organisation"
+ENTRY_KINDS = (KIND_PERSON, KIND_ORGANISATION)
+
 ALIU_CITATION_DISCLAIMER = (
     "This indicates only that the name appears in a 1946 Allied investigative "
     "record. It carries no finding as to any specific transaction, and no "
@@ -246,18 +255,30 @@ MATCH_SURNAME_ONLY = "surname_only"
 class MatchOutcome:
     """How a supplied name met an entry, and whether that identifies anyone.
 
-    `identity_confirmed` is false when the record gives only a surname and the
-    entry names a person: the record may be about a different individual of the
-    same name, and the flag has to say so rather than imply otherwise.
+    `identity_confirmed` is false when the record gives only one name and the
+    entry knows an individual by it: the record may be about a different person
+    of the same name, and the flag has to say so rather than imply otherwise.
     """
 
     basis: str
     identity_confirmed: bool
+    entry_kind: str = KIND_PERSON
 
     @property
     def note(self) -> str:
         if self.identity_confirmed:
             return ""
+        if self.entry_kind == KIND_ORGANISATION:
+            # Saying "the list entry names an individual" about an auction
+            # house is untrue, in the one rendering path whose entire
+            # justification is legal accuracy.
+            return (
+                "The record gives a single name with no further identifying "
+                "detail, and this entry is an organisation associated with a "
+                "named individual of the same name. This match therefore does "
+                "NOT establish which is meant, nor that either is the party in "
+                "this record. Confirm identity before treating this as anything."
+            )
         return (
             "The record gives a surname with no given name, and the list entry "
             "names an individual. This match therefore does NOT establish that "
@@ -276,6 +297,7 @@ def match_entry(
     supplied_names: tuple[str, ...],
     terms: tuple[MatchTerm, ...],
     person_forms: tuple[PersonName, ...],
+    entry_kind: str = KIND_PERSON,
 ) -> MatchOutcome | None:
     """Match a record's owner names against one reference-list entry.
 
@@ -295,13 +317,13 @@ def match_entry(
         # surname ("Wolff Metternich") is indistinguishable from Given+Surname
         # by shape alone — only the entry knows which it is.
         if any(known.surname == normalise(supplied) for known in person_forms):
-            return MatchOutcome(MATCH_SURNAME_ONLY, False)
+            return MatchOutcome(MATCH_SURNAME_ONLY, False, entry_kind)
 
         person = parse_person_name(supplied)
         if person is not None:
             for known in person_forms:
                 if known.surname == person.surname and known.compatible_with(person):
-                    return MatchOutcome(MATCH_GIVEN_NAME_COMPATIBLE, True)
+                    return MatchOutcome(MATCH_GIVEN_NAME_COMPATIBLE, True, entry_kind)
             # A named individual that does not match any individual the entry
             # knows. Deliberately no fallback to token containment: that
             # fallback is exactly what printed a dealer's annotation beside an
@@ -313,11 +335,11 @@ def match_entry(
             for term in terms:
                 term_tokens = term.text.split()
                 if len(term_tokens) >= 2 and _contains_term(form, term.text):
-                    return MatchOutcome(MATCH_FULL_NAME, True)
+                    return MatchOutcome(MATCH_FULL_NAME, True, entry_kind)
                 if len(term_tokens) == 1 and _contains_term(form, term.text):
                     if term.text in GENERIC_TOKENS:
                         continue
-                    return _single_token_outcome(term.text, person_forms)
+                    return _single_token_outcome(term.text, person_forms, entry_kind)
                 if not _contains_term(term.text, form):
                     continue
                 if len(tokens) >= 2:
@@ -334,12 +356,14 @@ def match_entry(
                     and form not in GENERIC_TOKENS
                     and form in term_tokens
                 ):
-                    return _single_token_outcome(form, person_forms)
+                    return _single_token_outcome(form, person_forms, entry_kind)
     return None
 
 
 def _single_token_outcome(
-    token: str, person_forms: tuple[PersonName, ...]
+    token: str,
+    person_forms: tuple[PersonName, ...],
+    entry_kind: str = KIND_PERSON,
 ) -> MatchOutcome:
     """A lone token: a person's surname, or an organisation's own name.
 
@@ -356,8 +380,8 @@ def _single_token_outcome(
     person cannot yield an organisation match, whatever token reached it.
     """
     if person_forms:
-        return MatchOutcome(MATCH_SURNAME_ONLY, False)
-    return MatchOutcome(MATCH_ORGANISATION_NAME, True)
+        return MatchOutcome(MATCH_SURNAME_ONLY, False, entry_kind)
+    return MatchOutcome(MATCH_ORGANISATION_NAME, True, entry_kind)
 
 
 # --------------------------------------------------------------------------
@@ -373,6 +397,7 @@ class AliuEntry:
     annotation: str
     source_url: str
     terms: tuple[MatchTerm, ...]
+    entry_kind: str
     person_forms: tuple[PersonName, ...] = ()
     verification_note: str | None = None
     cross_referenced_sources: tuple[str, ...] = ()
@@ -431,7 +456,9 @@ class AliuList:
             for entry in self.entries:
                 if entry.entry_id in seen:
                     continue
-                outcome = match_entry((supplied,), entry.terms, entry.person_forms)
+                outcome = match_entry(
+                    (supplied,), entry.terms, entry.person_forms, entry.entry_kind
+                )
                 if outcome is not None:
                     hits.append((entry, supplied, outcome))
                     seen.add(entry.entry_id)
@@ -460,6 +487,14 @@ def load_aliu_list(path: str | Path = DEFAULT_ALIU_PATH) -> AliuList:
                 f"{', '.join(missing)}. Every entry must carry its annotation "
                 "and source so a match can render as a citation."
             )
+        if item.get("entry_kind") not in ENTRY_KINDS:
+            raise ReferenceListError(
+                f"{path}: entry {index} ({item['name']}) has entry_kind "
+                f"{item.get('entry_kind')!r}. This must be stated, not defaulted: "
+                f"it decides how an identity-unconfirmed match is worded, and "
+                f"inferring it from the shape of a name has been wrong in both "
+                f"directions. Permitted: {', '.join(ENTRY_KINDS)}"
+            )
         if item["entry_type"] not in (ENTRY_DOCUMENTED_CONCERN, ENTRY_EXONERATING):
             raise ReferenceListError(
                 f"{path}: entry {index} has entry_type {item['entry_type']!r}; "
@@ -474,6 +509,7 @@ def load_aliu_list(path: str | Path = DEFAULT_ALIU_PATH) -> AliuList:
                 annotation=item["annotation"],
                 source_url=item["source_url"],
                 terms=_build_terms(item["name"], variants),
+                entry_kind=item["entry_kind"],
                 person_forms=_person_forms(item["name"], variants),
                 verification_note=item.get("verification_note"),
                 cross_referenced_sources=tuple(
@@ -531,6 +567,7 @@ class ConfiscationActor:
     name: str
     bases: tuple[ActorBasis, ...]
     terms: tuple[MatchTerm, ...]
+    entry_kind: str
     person_forms: tuple[PersonName, ...] = ()
     verification_note: str | None = None
     aliases: tuple[str, ...] = field(default_factory=tuple)
@@ -587,7 +624,9 @@ class ActorList:
             for actor in self.actors:
                 if actor.actor_id in seen:
                     continue
-                outcome = match_entry((supplied,), actor.terms, actor.person_forms)
+                outcome = match_entry(
+                    (supplied,), actor.terms, actor.person_forms, actor.entry_kind
+                )
                 if outcome is not None:
                     hits.append((actor, supplied, outcome))
                     seen.add(actor.actor_id)
@@ -613,6 +652,13 @@ def load_actor_list(path: str | Path = DEFAULT_ACTORS_PATH) -> ActorList:
         name = item.get("name")
         if not name:
             raise ReferenceListError(f"{path}: entry {index} has no name")
+        if item.get("entry_kind") not in ENTRY_KINDS:
+            raise ReferenceListError(
+                f"{path}: entry {index} ({name}) has entry_kind "
+                f"{item.get('entry_kind')!r}. This must be stated, not defaulted "
+                f"— see the note in the data file. Permitted: "
+                f"{', '.join(ENTRY_KINDS)}"
+            )
         bases_raw = item.get("documented_basis") or []
         if isinstance(bases_raw, dict):
             bases_raw = [bases_raw]
@@ -676,6 +722,7 @@ def load_actor_list(path: str | Path = DEFAULT_ACTORS_PATH) -> ActorList:
                 name=name,
                 bases=tuple(bases),
                 terms=_build_terms(name, aliases),
+                entry_kind=item["entry_kind"],
                 person_forms=_person_forms(name, aliases),
                 verification_note=item.get("verification_note"),
                 aliases=aliases,

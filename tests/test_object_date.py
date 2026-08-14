@@ -31,16 +31,22 @@ from src.heuristics import build_config, coverage_map, screen_object
 from src.schema import InputValidationError
 
 HEADER = (
-    "object_id,object_title,object_class,object_date,owner_name,"
+    "object_id,object_title,object_class,object_date,object_date_to,"
+    "object_date_precision,owner_name,"
     "owner_name_variants,date_from,date_to,date_precision,transaction_state,"
     "location,source_citation,export_licence_present,is_institution_acquisition,"
     "catalogue_reference,owner_stated_in_catalogue,restitution_recipient_type,notes"
 )
 
 
-def row(object_id, object_date, owner, date_from, acquisition=""):
+def row(object_id, object_date, owner, date_from, acquisition="",
+        object_date_to="", precision=None):
+    # Creation dates carry their own precision, exactly as transfer dates do.
+    if precision is None:
+        precision = "year" if object_date else ""
     return (
-        f'{object_id},Work,painting,{object_date},"{owner}",,{date_from},,year,'
+        f'{object_id},Work,painting,{object_date},{object_date_to},{precision},'
+        f'"{owner}",,{date_from},,year,'
         f'purchase,"Bern, Switzerland",Reg,,{acquisition},,,'
     )
 
@@ -141,7 +147,9 @@ class AbsentCreationDateTests(unittest.TestCase):
             for f in by_id["PRE"]["persecution_context_flags"]
             if f["rule_id"] == "PC-001"
         )
-        self.assertEqual(flag["cited_fields"]["object_date"], "1930")
+        # The cited value carries its precision, like every other date in
+        # the output — "1930 (year)", not a bare "1930".
+        self.assertEqual(flag["cited_fields"]["object_date"], "1930 (year)")
 
 
 class CoverageMapTests(unittest.TestCase):
@@ -169,11 +177,76 @@ class CoverageMapTests(unittest.TestCase):
         self.assertEqual(counts["creation_date_not_recorded"], 1)
 
 
+class ImpreciseCreationDateTests(unittest.TestCase):
+    """Most of what a museum's object records hold is imprecise.
+
+    "ca. 1905", "1920s", "17th century". A field that accepts only exact ISO
+    dates forces a curator either to drop the value into
+    `creation_date_not_recorded` or to assert a precision the record does not
+    support — and shrinking that bucket is the whole point of the field. The
+    machinery already existed: the `date_precision` vocabulary, the documented
+    circa margin, and the rule that a widened date can never yield a certain
+    answer. This is reuse, not a new concept.
+    """
+
+    def test_a_circa_date_inside_the_widened_band_still_raises_pc_001(self):
+        # circa 1948 widens to 1943-1953, which reaches back before the
+        # threshold, so the object is not CERTAINLY post-war.
+        _, _, by_id = screen([row("C", "1948", "Meier, S.", "1965", precision="circa")])
+        self.assertIn("PC-001", rule_ids(by_id["C"]))
+
+    def test_a_circa_date_clear_of_the_band_does_not(self):
+        _, _, by_id = screen([row("C", "1962", "Meier, S.", "1965", precision="circa")])
+        self.assertNotIn("PC-001", rule_ids(by_id["C"]))
+
+    def test_a_decade_is_expressible_as_a_range(self):
+        _, _, by_id = screen(
+            [row("D", "1920", "Meier, S.", "1965", object_date_to="1929")]
+        )
+        self.assertIn("PC-001", rule_ids(by_id["D"]))
+
+    def test_a_century_is_expressible_as_a_range(self):
+        _, _, by_id = screen(
+            [row("E", "1600", "Meier, S.", "1965", object_date_to="1699")]
+        )
+        self.assertIn("PC-001", rule_ids(by_id["E"]))
+
+    def test_before_and_after_are_accepted(self):
+        _, _, by_id = screen(
+            [
+                row("B1", "1930", "Meier, S.", "1965", precision="before"),
+                row("A1", "1960", "Meier, S.", "1965", precision="after"),
+            ]
+        )
+        self.assertIn("PC-001", rule_ids(by_id["B1"]))
+        self.assertNotIn("PC-001", rule_ids(by_id["A1"]))
+
+    def test_an_imprecise_date_still_counts_as_recorded(self):
+        chains, results, _ = screen(
+            [row("C", "1905", "Meier, S.", "1965", precision="circa")]
+        )
+        counts = coverage_map(chains, results)
+        self.assertEqual(counts["creation_date_not_recorded"], 0)
+
+
 class ValidationTests(unittest.TestCase):
     def test_a_malformed_creation_date_is_rejected(self):
         with self.assertRaises(InputValidationError) as caught:
             screen([row("BAD", "circa 1962", "Meier, S.", "1965")])
-        self.assertIn("object_date", "\n".join(caught.exception.problems))
+        problems = "\n".join(caught.exception.problems)
+        self.assertIn("object_date", problems)
+        # The message names the column to fix, not the transfer-date column
+        # that shares the parsing code.
+        self.assertNotIn("date_from", problems)
+
+    def test_a_precision_is_required_whenever_a_creation_date_is_given(self):
+        with self.assertRaises(InputValidationError) as caught:
+            screen([row("BAD", "1962", "Meier, S.", "1965", precision="")])
+        self.assertIn("object_date_precision", "\n".join(caught.exception.problems))
+
+    def test_a_precision_finer_than_the_value_is_rejected(self):
+        with self.assertRaises(InputValidationError):
+            screen([row("BAD", "1962", "Meier, S.", "1965", precision="exact")])
 
     def test_an_impossible_creation_date_is_rejected(self):
         with self.assertRaises(InputValidationError):
@@ -181,7 +254,9 @@ class ValidationTests(unittest.TestCase):
 
     def test_the_column_is_optional(self):
         # Every existing file omits it, and must keep loading unchanged.
-        legacy_header = HEADER.replace("object_date,", "")
+        legacy_header = HEADER.replace(
+            "object_date,object_date_to,object_date_precision,", ""
+        )
         with tempfile.NamedTemporaryFile(
             "w", suffix=".csv", delete=False, encoding="utf-8"
         ) as handle:

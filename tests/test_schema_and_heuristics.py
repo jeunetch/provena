@@ -626,14 +626,14 @@ class Rule6ConfiscationActorTests(unittest.TestCase):
     def test_loader_rejects_an_entry_with_no_documented_basis(self):
         self.assertRaisesRegex(
             name_matching.ReferenceListError, "documented_basis",
-            self._load_bad, {"actors": [{"name": "X"}]},
+            self._load_bad, {"actors": [{"name": "X", "entry_kind": "organisation"}]},
         )
 
     def test_loader_rejects_a_basis_with_no_sources(self):
         self.assertRaisesRegex(
             name_matching.ReferenceListError, "no sources",
             self._load_bad,
-            {"actors": [{"name": "X", "documented_basis": [
+            {"actors": [{"name": "X", "entry_kind": "organisation", "documented_basis": [
                 {"summary": "s", "implies_persecution_of_former_owner": True}]}]},
         )
 
@@ -641,7 +641,7 @@ class Rule6ConfiscationActorTests(unittest.TestCase):
         self.assertRaisesRegex(
             name_matching.ReferenceListError, "implies_persecution_of_former_owner",
             self._load_bad,
-            {"actors": [{"name": "X", "documented_basis": [
+            {"actors": [{"name": "X", "entry_kind": "organisation", "documented_basis": [
                 {"summary": "s", "sources": ["src"]}]}]},
         )
 
@@ -1099,8 +1099,8 @@ class Rule12AliuNameMatchTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = pathlib.Path(tmp) / "bad.json"
             path.write_text(json.dumps({"entries": [{
-                "name": "X", "entry_type": "flagged", "annotation": "a",
-                "source_url": "u"}]}))
+                "name": "X", "entry_type": "flagged", "entry_kind": "person",
+                "annotation": "a", "source_url": "u"}]}))
             with self.assertRaisesRegex(name_matching.ReferenceListError, "entry_type"):
                 name_matching.load_aliu_list(path)
 

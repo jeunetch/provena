@@ -879,6 +879,7 @@ def rule_object_class(
     rule_class = matched_object_class(chain.object_class)
     if rule_class is None:
         return [], []
+    notes: list[str] = []
 
     flags: list[dict[str, object]] = []
     band = table.global_band
@@ -928,11 +929,26 @@ def rule_object_class(
         )
         flags.append(_flag(RULE_PC_004, statement, cited, tier))
 
+    # The absent-chain limb makes the same inference PC-001 does, and it
+    # inverts for the same reason: for an object created after the band, an
+    # absent pre-1945 chain is not the trace of a confiscation channel, it is
+    # arithmetic. Contemporary silver, studio ceramics, modern Judaica and
+    # commemorative coins are ordinary holdings, and this rule has no location
+    # requirement to thin them out.
     _, certainly_pre_1945 = _pre_1945_status(chain)
-    if not certainly_pre_1945:
+    postwar = chain.certainly_created_after(PRE_1945_THRESHOLD)
+    if postwar and not certainly_pre_1945:
+        notes.append(
+            f"{RULE_PC_004} absent-chain limb not applicable: the object's "
+            f"recorded creation date ({chain.object_date}) is on or after "
+            f"{PRE_1945_THRESHOLD.isoformat()}, so the absence of a pre-1945 "
+            f"chain is not evidence of a confiscation channel."
+        )
+    if not certainly_pre_1945 and not postwar:
         cited = dict(common)
         cited["records_in_chain"] = len(chain.records)
         cited["certainly_dated_before_1945"] = False
+        cited["object_date"] = chain.object_date
         statement = (
             f"Unverified: what was this object's history before 1945? It is "
             f"recorded as {chain.object_class!r}, a class for which an absent "
@@ -942,7 +958,7 @@ def rule_object_class(
         )
         flags.append(_flag(RULE_PC_004, statement, cited, PresumptionTier.NOT_APPLICABLE))
 
-    return flags, []
+    return flags, notes
 
 
 # --------------------------------------------------------------------------

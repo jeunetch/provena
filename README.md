@@ -124,11 +124,33 @@ is the silent false negative this tool exists to avoid — so the flag runs and
 says, in its own statement, that it cannot distinguish an object whose early
 provenance is undocumented from one created after 1945 that never had any.
 
-Precision is read from the value's granularity and only the earliest possible
-day counts: `1946` means some time in 1946, so the object certainly postdates
-1945. There is no separate precision field, so where creation is uncertain,
-record the earliest plausible year — the rule only steps aside when the object
-*certainly* postdates the band.
+A creation date carries its own precision, through the same
+`date_precision` vocabulary and the same circa margin as a transfer date —
+`object_date`, `object_date_to`, `object_date_precision`. Most of what a
+museum's object records hold is imprecise, and a field that accepted only
+exact ISO dates would push "ca. 1905" straight back into the bucket it exists
+to shrink:
+
+| record says | how to enter it |
+|---|---|
+| ca. 1948 | `object_date=1948`, precision `circa` |
+| 1920s | `object_date=1920`, `object_date_to=1929`, precision `year` |
+| 17th century | `object_date=1600`, `object_date_to=1699`, precision `year` |
+| before 1930 | `object_date=1930`, precision `before` |
+
+Only the earliest possible day counts, and it is the *widened* one, so the
+stated precision governs. `circa 1948` widens to 1943–1953, reaches back
+before the threshold, and therefore does **not** step the rule aside — the
+same rule the rest of the tool applies, that a widened date can never yield a
+certain answer.
+
+**PC-004 consults it too.** That rule's second limb — a covered object class
+with no record certainly dated pre-1945 — makes the same inference PC-001
+does, and it inverts for the same reason: for an object created after the
+band, an absent pre-1945 chain is arithmetic, not the trace of a confiscation
+channel. Contemporary silver, studio ceramics, modern Judaica and
+commemorative coins are ordinary holdings, and PC-004 has no location
+requirement to thin them out.
 
 | Rule | ID | Axis |
 |---|---|---|
@@ -161,7 +183,7 @@ local name, so the namespace prefix a file uses does not matter.
 | `object_id` | `lido:lidoRecID`, else `administrativeMetadata/recordWrap/recordID` |
 | `object_title` | `objectIdentificationWrap/titleWrap/titleSet/appellationValue` |
 | `object_class` | `objectClassificationWrap/objectWorkTypeWrap/objectWorkType/term` |
-| `object_date` | no native mapping — use `PROVENA_EXT:object_date=` |
+| `object_date` / `object_date_to` / `object_date_precision` | no native mapping — use `PROVENA_EXT:object_date=` etc. |
 | `owner_name` | `eventActor/actorInRole/actor/nameActorSet/appellationValue` |
 | `owner_name_variants` | that actor's remaining `appellationValue`s |
 | `date_from` / `date_to` | `eventDate/date/earliestDate` and `latestDate` |

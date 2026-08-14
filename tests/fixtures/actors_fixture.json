@@ -7,49 +7,69 @@
     {
       "actor_id": "FIX-A1",
       "name": "Auktionshaus Steinbach",
-      "match_terms": ["auktionshaus steinbach", "steinbach"],
+      "match_terms": [
+        "auktionshaus steinbach",
+        "steinbach"
+      ],
       "documented_basis": [
         {
           "summary": "Invented basis: entry stands for the case where the documented activity does bear on persecution of a private former owner.",
           "period": "1938-1945",
-          "sources": ["Synthetic fixture, no real source"],
+          "sources": [
+            "Synthetic fixture, no real source"
+          ],
           "implies_persecution_of_former_owner": true
         }
-      ]
+      ],
+      "entry_kind": "organisation"
     },
     {
       "actor_id": "FIX-A2",
       "name": "Galerie Beispiel",
-      "match_terms": ["galerie beispiel", "beispiel"],
+      "match_terms": [
+        "galerie beispiel",
+        "beispiel"
+      ],
       "verification_note": "Invented weaker-sourcing note: stands for an entry whose second limb rests on a thinner evidentiary base than its first.",
       "documented_basis": [
         {
           "summary": "Invented basis limb 1: a state-organised disposal of works removed from PUBLIC MUSEUM collections. Well documented, but concerns works taken from institutions rather than from private individuals, so it does not bear on persecution of a private former owner.",
           "period": "1939",
-          "sources": ["Synthetic fixture, no real source"],
+          "sources": [
+            "Synthetic fixture, no real source"
+          ],
           "implies_persecution_of_former_owner": false
         },
         {
           "summary": "Invented basis limb 2: a separately-sourced, weaker claim about broader trading in looted art, which does not on its own establish anything about any specific object's former owner.",
           "period": "1939-1945",
-          "sources": ["Synthetic fixture, no real source"],
+          "sources": [
+            "Synthetic fixture, no real source"
+          ],
           "implies_persecution_of_former_owner": false
         }
-      ]
+      ],
+      "entry_kind": "organisation"
     },
     {
       "actor_id": "FIX-A3",
       "name": "Handelshaus Muster",
-      "match_terms": ["handelshaus muster", "muster"],
+      "match_terms": [
+        "handelshaus muster",
+        "muster"
+      ],
       "verification_note": "Invented weaker-sourcing note: stands for an entry that must never render with the confidence of a well-documented one.",
       "documented_basis": [
         {
           "summary": "Invented basis: activity documented only in a secondary summary.",
           "period": "1938-1945",
-          "sources": ["Synthetic fixture, no real source"],
+          "sources": [
+            "Synthetic fixture, no real source"
+          ],
           "implies_persecution_of_former_owner": false
         }
-      ]
+      ],
+      "entry_kind": "organisation"
     }
   ]
 }

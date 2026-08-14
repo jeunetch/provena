@@ -35,7 +35,8 @@
         "https://pilot-demo.jdcrp.org/people/weinmuller_adolf-/",
         "https://www.cnn.com/2019/04/21/us/nazi-stolen-art-returned/index.html"
       ],
-      "verification_note": "Strongly corroborated across Bavarian state provenance research project, JDCRP, CNN, and Wikipedia independently."
+      "verification_note": "Strongly corroborated across Bavarian state provenance research project, JDCRP, CNN, and Wikipedia independently.",
+      "entry_kind": "organisation"
     },
     {
       "name": "Galerie Fischer (Lucerne)",
@@ -72,7 +73,8 @@
         "https://en.wikipedia.org/wiki/Theodor_Fischer_(auctioneer)",
         "https://pilot-demo.jdcrp.org/event/1939-06-30-fischer-auction/"
       ],
-      "verification_note": "The 30 June 1939 date/venue/category is very strongly corroborated (5+ independent sources). The broader wartime looted-art-trading claim is single-sourced (Wikipedia) — verify independently before relying on it for anything beyond the 1939 state-museum sale specifically."
+      "verification_note": "The 30 June 1939 date/venue/category is very strongly corroborated (5+ independent sources). The broader wartime looted-art-trading claim is single-sourced (Wikipedia) — verify independently before relying on it for anything beyond the 1939 state-museum sale specifically.",
+      "entry_kind": "organisation"
     },
     {
       "name": "Lempertz (Cologne)",
@@ -99,7 +101,8 @@
         "https://www.wikidata.org/wiki/Q1272748",
         "https://www.openartdata.org/2025/10/holocaust-art-research-digital-tools.html"
       ],
-      "verification_note": "ALIU listing and Max Stern case both independently corroborated. Note explicitly that mere name-mention in a provenance record is not itself evidence — cited source explicitly warns of this."
+      "verification_note": "ALIU listing and Max Stern case both independently corroborated. Note explicitly that mere name-mention in a provenance record is not itself evidence — cited source explicitly warns of this.",
+      "entry_kind": "organisation"
     },
     {
       "name": "Dorotheum (Vienna)",
@@ -125,7 +128,8 @@
         "https://justapedia.org/wiki/Adolf_Weinm%C3%BCller",
         "https://pilot-demo.jdcrp.org/people/weinmuller_adolf-/"
       ],
-      "verification_note": "WEAKER SOURCING than the other entries — corroborated only via the Weinmüller research (two sources, both discussing Dorotheum as a secondary detail, not a dedicated Dorotheum-focused source). Get a dedicated citation before treating as fully verified."
+      "verification_note": "WEAKER SOURCING than the other entries — corroborated only via the Weinmüller research (two sources, both discussing Dorotheum as a secondary detail, not a dedicated Dorotheum-focused source). Get a dedicated citation before treating as fully verified.",
+      "entry_kind": "organisation"
     },
     {
       "name": "Sonderauftrag Linz",
@@ -152,7 +156,8 @@
         "https://en.wikipedia.org/wiki/Art_Looting_Investigation_Unit",
         "https://artmusem-collections-online.webapps.iu.edu/provenance/ww2/index.php"
       ],
-      "verification_note": "Extremely well-established historical entity, corroborated across 5+ independent sources encountered during research. No further verification needed."
+      "verification_note": "Extremely well-established historical entity, corroborated across 5+ independent sources encountered during research. No further verification needed.",
+      "entry_kind": "organisation"
     },
     {
       "name": "ERR (Einsatzstab Reichsleiter Rosenberg)",
@@ -179,7 +184,9 @@
         "https://en.wikipedia.org/wiki/Art_Looting_Investigation_Unit",
         "https://artmusem-collections-online.webapps.iu.edu/provenance/ww2/index.php"
       ],
-      "verification_note": "Extremely well-established historical entity, corroborated across numerous independent sources encountered during research. No further verification needed."
+      "verification_note": "Extremely well-established historical entity, corroborated across numerous independent sources encountered during research. No further verification needed.",
+      "entry_kind": "organisation"
     }
-  ]
+  ],
+  "_entry_kind_note": "`entry_kind` is required on every entry and the loader refuses to default it. Whether an entry names an individual or an organisation decides how an identity-unconfirmed match is worded, and inferring it from the punctuation of the name is a guess that has been wrong in both directions — see DECISIONS. Permitted: person, organisation."
 }

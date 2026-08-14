@@ -11,7 +11,12 @@
       "entry_type": "documented_concern",
       "annotation": "Invented annotation: stands for an entry recorded in the investigative record as a documented concern.",
       "source_url": "https://example.invalid/fixture/1",
-      "match_terms": ["muster, heinrich", "heinrich muster", "muster"]
+      "match_terms": [
+        "muster, heinrich",
+        "heinrich muster",
+        "muster"
+      ],
+      "entry_kind": "person"
     },
     {
       "entry_id": "FIX-2",
@@ -19,7 +24,11 @@
       "entry_type": "exonerating",
       "annotation": "Invented annotation: stands for an entry recorded in terms that clear the named person, or that record protective conduct. Rendering this as a concern would invert its meaning.",
       "source_url": "https://example.invalid/fixture/2",
-      "match_terms": ["vogel, franz", "franz vogel"]
+      "match_terms": [
+        "vogel, franz",
+        "franz vogel"
+      ],
+      "entry_kind": "person"
     }
   ]
 }

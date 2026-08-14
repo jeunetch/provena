@@ -264,6 +264,7 @@ class CompoundSurnameTests(unittest.TestCase):
                     "name": "von Behr, Kurt",
                     "name_variants": ["Kurt von Behr"],
                     "entry_type": "documented_concern",
+                    "entry_kind": "person",
                     "annotation": "Fixture entry.",
                     "source_url": "https://example.invalid/fixture",
                 }
@@ -374,6 +375,88 @@ class StatementCarriesTheCaveatTests(unittest.TestCase):
         )
 
 
+class EntryKindTests(unittest.TestCase):
+    """Person-or-organisation is declared, never guessed from the name's shape.
+
+    Both earlier defects were that guess going wrong in different directions:
+    a compound surname read as Given+Surname, and an auction house rendered
+    with "the list entry names an individual" — an untrue sentence in the one
+    rendering path whose whole justification is legal accuracy. Nine entries
+    to annotate now; two thousand later, after the guess has been wrong in
+    public.
+    """
+
+    def _payload(self, **overrides):
+        entry = {
+            "entry_id": "K1",
+            "name": "Testperson, Amalia",
+            "entry_type": "documented_concern",
+            "entry_kind": "person",
+            "annotation": "Fixture.",
+            "source_url": "https://example.invalid/fixture",
+        }
+        entry.update(overrides)
+        return {"_meta": {"status": "test fixture"}, "entries": [entry]}
+
+    def _load(self, payload):
+        import json
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump(payload, handle)
+            path = handle.name
+        return name_matching.load_aliu_list(path)
+
+    def test_the_loader_refuses_to_default_the_kind(self):
+        payload = self._payload()
+        del payload["entries"][0]["entry_kind"]
+        with self.assertRaises(name_matching.ReferenceListError) as caught:
+            self._load(payload)
+        self.assertIn("entry_kind", str(caught.exception))
+
+    def test_the_loader_rejects_an_unknown_kind(self):
+        with self.assertRaises(name_matching.ReferenceListError):
+            self._load(self._payload(entry_kind="institution"))
+
+    def test_every_bundled_entry_declares_its_kind(self):
+        for entry in load_aliu_list(REAL_ALIU).entries:
+            self.assertIn(entry.entry_kind, name_matching.ENTRY_KINDS, entry.name)
+        for actor in load_actor_list(REAL_ACTORS).actors:
+            self.assertIn(actor.entry_kind, name_matching.ENTRY_KINDS, actor.name)
+
+    def test_an_organisation_is_never_described_as_naming_an_individual(self):
+        # The untrue sentence. "Galerie Fischer (Lucerne)" is an auction house.
+        fischer = next(
+            a for a in load_actor_list(REAL_ACTORS).actors if "Fischer" in a.name
+        )
+        outcome = match_entry(
+            ("Fischer",), fischer.terms, fischer.person_forms, fischer.entry_kind
+        )
+        self.assertFalse(outcome.identity_confirmed)
+        self.assertNotIn("the list entry names an individual", outcome.note)
+        self.assertIn("organisation", outcome.note)
+
+    def test_a_person_entry_keeps_the_person_wording(self):
+        lange = next(e for e in load_aliu_list(REAL_ALIU).entries if "Lange" in e.name)
+        outcome = match_entry(("Lange",), lange.terms, lange.person_forms, lange.entry_kind)
+        self.assertIn("names an individual", outcome.note)
+
+    def test_the_kind_does_not_change_whether_something_matches(self):
+        # It governs wording only. Confidence is still decided by whether the
+        # entry knows any individual by that name.
+        fischer = next(
+            a for a in load_actor_list(REAL_ACTORS).actors if "Fischer" in a.name
+        )
+        self.assertIsNone(
+            match_entry(
+                ("Fischer, Ernst",), fischer.terms, fischer.person_forms,
+                fischer.entry_kind,
+            )
+        )
+
+
 class SourceDisciplineTests(unittest.TestCase):
     def test_matching_follows_the_data_file_not_the_code(self):
         # Behavioural rather than a grep: a name invented here matches only
@@ -391,6 +474,7 @@ class SourceDisciplineTests(unittest.TestCase):
                     "name": "Testperson, Amalia",
                     "name_variants": ["Amalia Testperson"],
                     "entry_type": "documented_concern",
+                    "entry_kind": "person",
                     "annotation": "Fixture entry.",
                     "source_url": "https://example.invalid/fixture",
                 }
