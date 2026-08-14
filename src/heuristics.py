@@ -954,9 +954,13 @@ def rule_confiscation_actors(
         if certainty is None:
             continue
 
-        for actor, matched_name in hits:
+        for actor, matched_name, outcome in hits:
             cited = record.cite("owner_name", "date_span", "location", "transaction_state")
             cited["matched_on"] = matched_name
+            cited["match_basis"] = outcome.basis
+            cited["identity_confirmed"] = outcome.identity_confirmed
+            if outcome.note:
+                cited["identity_caveat"] = outcome.note
             cited.update(actor.cite())
             cited["actor_window"] = (
                 f"{ACTOR_WINDOW[0].isoformat()} to {ACTOR_WINDOW[1].isoformat()}"
@@ -1401,13 +1405,42 @@ def rule_aliu_name_match(
         ]
 
     aliu = config.aliu_list
+    band = config.onset_table.global_band
     flags: list[dict[str, object]] = []
     citations: list[dict[str, object]] = []
+    skips: list[str] = []
 
     for record in chain.records:
-        for entry, matched_name in aliu.match(record.owner_names):
+        hits = aliu.match(record.owner_names)
+        if not hits:
+            continue
+        # The date gate. Without it a 2019 acquisition from a dealer who
+        # happens to share a surname with a 1946 investigative record raises a
+        # flag about a named third party. Every other name-bearing rule gates
+        # on persecution context; this one is the rule where an ungated match
+        # is most costly, so it gates too.
+        if record.date_span is None:
+            skips.append(
+                f"{RULE_NM_001} not applied to {record.source_ref}: the record "
+                f"carries no date, so it could not be placed inside or outside "
+                f"the screening band {band[0].isoformat()} to {band[1].isoformat()}. "
+                f"A name match was NOT evaluated for this record — this is a "
+                f"criterion that could not run, not one that ran and found nothing."
+            )
+            continue
+        if record.date_span.overlap_certainty(*band) is None:
+            continue
+
+        for entry, matched_name, outcome in hits:
             cited = record.cite("owner_name", "owner_name_variants", "date_span")
             cited["matched_on"] = matched_name
+            cited["match_basis"] = outcome.basis
+            cited["identity_confirmed"] = outcome.identity_confirmed
+            if outcome.note:
+                cited["identity_caveat"] = outcome.note
+            cited["screening_band"] = (
+                f"{band[0].isoformat()} to {band[1].isoformat()}"
+            )
             cited.update(entry.cite())
             cited["citation_disclaimer"] = ALIU_CITATION_DISCLAIMER
             if aliu.critical_scholarly_context:
@@ -1445,7 +1478,7 @@ def rule_aliu_name_match(
                 _flag(RULE_NM_001, statement, cited, PresumptionTier.NOT_APPLICABLE)
             )
 
-    return flags, citations, []
+    return flags, citations, skips
 
 
 # --------------------------------------------------------------------------

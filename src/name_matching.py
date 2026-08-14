@@ -71,7 +71,10 @@ def normalise(text: str) -> str:
     decomposed = unicodedata.normalize("NFKD", text)
     stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
     lowered = stripped.casefold()
-    return re.sub(r"[^\w\s]+", " ", lowered).strip()
+    punctuation_to_space = re.sub(r"[^\w\s]+", " ", lowered)
+    # Collapsing runs is not cosmetic: "Lange, Hans W." leaves a double space
+    # where the comma was, so "hans w lange" would never match "lange  hans w".
+    return re.sub(r"\s+", " ", punctuation_to_space).strip()
 
 
 # Tokens too generic to identify an entry on their own. A record naming only
@@ -88,6 +91,82 @@ GENERIC_TOKENS = frozenset(
 )
 
 
+# --------------------------------------------------------------------------
+# Personal-name identity
+#
+# A shared surname is not a shared identity. Matching on the surname alone
+# prints a 1946 investigative annotation about one person beside the name of
+# a different person who happens to share it — "Lange, Elisabeth" against
+# "Lange, Hans W." — and Fischer, Lange and Wolff are not exotic surnames in a
+# Swiss collection, they are the modal case.
+#
+# The asymmetry that justifies over-flagging elsewhere does NOT hold here, and
+# this is the one place in the tool where that must be said explicitly. A
+# false positive on a persecution-window rule costs a researcher an hour. A
+# false positive here is an assertion about a named third party, who may have
+# living heirs, inside a document the institution circulates. Those are not
+# the same cost and must not share a threshold.
+# --------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class PersonName:
+    """A personal name split into the parts identity actually depends on."""
+
+    surname: str
+    given: tuple[str, ...]
+
+    def compatible_with(self, other: "PersonName") -> bool:
+        """Whether two given-name sets can denote the same person.
+
+        Only the FIRST given name is compared, treating a single letter as an
+        initial: "Lange, H." is compatible with "Lange, Hans W.", and
+        "Lange, Elisabeth" is not.
+
+        Comparing any token against any token is too loose, and loose in the
+        expensive direction: the entry's middle initial "W." would otherwise
+        make "Lange, Werner" a match for "Lange, Hans W.", which is a
+        different person. A middle initial cannot carry an identification on
+        its own.
+        """
+        if not self.given or not other.given:
+            return False
+        mine, theirs = self.given[0], other.given[0]
+        if mine == theirs:
+            return True
+        if len(mine) == 1:
+            return theirs.startswith(mine)
+        if len(theirs) == 1:
+            return mine.startswith(theirs)
+        return False
+
+
+def parse_person_name(raw: str) -> PersonName | None:
+    """Parse a value into surname + given names, or None if it is not a person.
+
+    Three accepted shapes, all conservative — anything else returns None and
+    is treated as an organisation, because guessing that a business name is a
+    person is how a company's town ends up compared against a given name.
+    """
+    if "," in raw:
+        surname, _, given = raw.partition(",")
+        surname_n = normalise(surname)
+        given_n = tuple(t for t in normalise(given).split() if t)
+        if surname_n and given_n:
+            return PersonName(surname_n, given_n)
+        return None
+
+    tokens = normalise(raw).split()
+    if any(token in GENERIC_TOKENS for token in tokens):
+        return None
+    if len(tokens) == 2:
+        return PersonName(tokens[1], (tokens[0],))
+    # "Hans W. Lange" — exactly one initial, so the shape is unambiguous.
+    if len(tokens) == 3 and sum(len(t) == 1 for t in tokens) == 1:
+        return PersonName(tokens[2], tuple(tokens[:2]))
+    return None
+
+
 def _surname_first_swap(name: str) -> str:
     """'Dettwiler, R.' -> 'r dettwiler', so both orderings match."""
     if "," not in name:
@@ -102,6 +181,12 @@ def candidate_forms(name: str) -> set[str]:
     swapped = _surname_first_swap(name)
     if swapped:
         forms.add(swapped)
+    # A dotted acronym normalises to single letters — "E.R.R." becomes
+    # "e r r" — and would otherwise never reach the "err" entry, because
+    # every token is below the single-token length floor.
+    tokens = normalise(name).split()
+    if len(tokens) > 1 and all(len(token) == 1 for token in tokens):
+        forms.add("".join(tokens))
     return {f for f in forms if f}
 
 
@@ -151,32 +236,115 @@ def _build_terms(name: str, variants: tuple[str, ...]) -> tuple[MatchTerm, ...]:
     return tuple(MatchTerm(text=t, allow_single_token=ok) for t, ok in terms.items())
 
 
-def _matches(supplied_forms: set[str], terms: tuple[MatchTerm, ...]) -> bool:
-    """Bidirectional match between a supplied name and an entry's terms.
+MATCH_FULL_NAME = "full_name"
+MATCH_GIVEN_NAME_COMPATIBLE = "given_name_compatible"
+MATCH_ORGANISATION_NAME = "organisation_name"
+MATCH_SURNAME_ONLY = "surname_only"
 
-    Forward: the entry's name appears inside the supplied value, which catches
-    "Kunsthaus Lempertz AG" against "kunsthaus lempertz". Reverse: the supplied
-    value appears inside the entry's name, which catches a record that records
-    only "Weinmüller" or only "Wolff Metternich". The reverse direction is
-    guarded so a single generic or given-name token cannot match.
+
+@dataclass(frozen=True)
+class MatchOutcome:
+    """How a supplied name met an entry, and whether that identifies anyone.
+
+    `identity_confirmed` is false when the record gives only a surname and the
+    entry names a person: the record may be about a different individual of the
+    same name, and the flag has to say so rather than imply otherwise.
     """
-    for form in supplied_forms:
-        tokens = form.split()
-        for term in terms:
-            if _contains_term(form, term.text):
-                return True
-            if not _contains_term(term.text, form):
-                continue
-            if len(tokens) >= 2:
-                return True
-            if (
-                term.allow_single_token
-                and len(form) >= 4
-                and form not in GENERIC_TOKENS
-                and form in term.text.split()
-            ):
-                return True
-    return False
+
+    basis: str
+    identity_confirmed: bool
+
+    @property
+    def note(self) -> str:
+        if self.identity_confirmed:
+            return ""
+        return (
+            "The record gives a surname with no given name, and the list entry "
+            "names an individual. This match therefore does NOT establish that "
+            "the record's party is the person the entry describes — a different "
+            "individual of the same surname is equally consistent with the "
+            "record. Confirm identity before treating this as anything."
+        )
+
+
+def _person_forms(name: str, variants: tuple[str, ...]) -> tuple[PersonName, ...]:
+    parsed = [parse_person_name(raw) for raw in (name, *variants)]
+    return tuple(p for p in parsed if p is not None)
+
+
+def match_entry(
+    supplied_names: tuple[str, ...],
+    terms: tuple[MatchTerm, ...],
+    person_forms: tuple[PersonName, ...],
+) -> MatchOutcome | None:
+    """Match a record's owner names against one reference-list entry.
+
+    The rule that matters: **a supplied value that names a person is matched
+    as a person.** Sharing a surname with a list entry is not sharing an
+    identity, so a supplied given name that conflicts with every given name
+    the entry knows is a non-match, not a weak match. Only where the record
+    records no given name at all does a surname stand alone, and that result
+    is marked identity-unconfirmed rather than silently equated.
+
+    Organisation values keep the previous bidirectional containment, which is
+    what catches "Kunsthaus Lempertz AG" and a record that says only
+    "Dorotheum".
+    """
+    for supplied in supplied_names:
+        # A bare surname, checked before the person parse because a compound
+        # surname ("Wolff Metternich") is indistinguishable from Given+Surname
+        # by shape alone — only the entry knows which it is.
+        if any(known.surname == normalise(supplied) for known in person_forms):
+            return MatchOutcome(MATCH_SURNAME_ONLY, False)
+
+        person = parse_person_name(supplied)
+        if person is not None:
+            for known in person_forms:
+                if known.surname == person.surname and known.compatible_with(person):
+                    return MatchOutcome(MATCH_GIVEN_NAME_COMPATIBLE, True)
+            # A named individual that does not match any individual the entry
+            # knows. Deliberately no fallback to token containment: that
+            # fallback is exactly what printed a dealer's annotation beside an
+            # unrelated person's name.
+            continue
+
+        for form in candidate_forms(supplied):
+            tokens = form.split()
+            for term in terms:
+                term_tokens = term.text.split()
+                if len(term_tokens) >= 2 and _contains_term(form, term.text):
+                    return MatchOutcome(MATCH_FULL_NAME, True)
+                if len(term_tokens) == 1 and _contains_term(form, term.text):
+                    if term.text in GENERIC_TOKENS:
+                        continue
+                    return _single_token_outcome(term.text, person_forms)
+                if not _contains_term(term.text, form):
+                    continue
+                if len(tokens) >= 2:
+                    # A multi-token value inside the entry's name. At least one
+                    # token must carry information: every token of
+                    # "Münchener Kunstversteigerungshaus" is generic, and two
+                    # generic words identify no one.
+                    if all(token in GENERIC_TOKENS for token in tokens):
+                        continue
+                    return MatchOutcome(MATCH_FULL_NAME, True)
+                if (
+                    term.allow_single_token
+                    and len(form) >= 4
+                    and form not in GENERIC_TOKENS
+                    and form in term_tokens
+                ):
+                    return _single_token_outcome(form, person_forms)
+    return None
+
+
+def _single_token_outcome(
+    token: str, person_forms: tuple[PersonName, ...]
+) -> MatchOutcome:
+    """A lone token: a person's surname, or an organisation's own name."""
+    if any(known.surname == token for known in person_forms):
+        return MatchOutcome(MATCH_SURNAME_ONLY, False)
+    return MatchOutcome(MATCH_ORGANISATION_NAME, True)
 
 
 # --------------------------------------------------------------------------
@@ -192,6 +360,7 @@ class AliuEntry:
     annotation: str
     source_url: str
     terms: tuple[MatchTerm, ...]
+    person_forms: tuple[PersonName, ...] = ()
     verification_note: str | None = None
     cross_referenced_sources: tuple[str, ...] = ()
 
@@ -239,19 +408,19 @@ class AliuList:
         """
         return "seed" in self.status.casefold() or "incomplete" in self.status.casefold()
 
-    def match(self, names: list[str]) -> list[tuple[AliuEntry, str]]:
-        """(entry, the supplied name that matched) for every list hit."""
-        hits: list[tuple[AliuEntry, str]] = []
+    def match(self, names: list[str]) -> list[tuple[AliuEntry, str, MatchOutcome]]:
+        """(entry, the supplied name that matched, how it matched)."""
+        hits: list[tuple[AliuEntry, str, MatchOutcome]] = []
         seen: set[str] = set()
         for supplied in names:
             if not supplied:
                 continue
-            forms = candidate_forms(supplied)
             for entry in self.entries:
                 if entry.entry_id in seen:
                     continue
-                if _matches(forms, entry.terms):
-                    hits.append((entry, supplied))
+                outcome = match_entry((supplied,), entry.terms, entry.person_forms)
+                if outcome is not None:
+                    hits.append((entry, supplied, outcome))
                     seen.add(entry.entry_id)
         return hits
 
@@ -292,6 +461,7 @@ def load_aliu_list(path: str | Path = DEFAULT_ALIU_PATH) -> AliuList:
                 annotation=item["annotation"],
                 source_url=item["source_url"],
                 terms=_build_terms(item["name"], variants),
+                person_forms=_person_forms(item["name"], variants),
                 verification_note=item.get("verification_note"),
                 cross_referenced_sources=tuple(
                     item.get("cross_referenced_sources") or ()
@@ -348,6 +518,7 @@ class ConfiscationActor:
     name: str
     bases: tuple[ActorBasis, ...]
     terms: tuple[MatchTerm, ...]
+    person_forms: tuple[PersonName, ...] = ()
     verification_note: str | None = None
     aliases: tuple[str, ...] = field(default_factory=tuple)
     location: str | None = None
@@ -392,18 +563,20 @@ class ActorList:
         lowered = self.status.casefold()
         return "seed" in lowered or "not exhaustive" in lowered
 
-    def match(self, names: list[str]) -> list[tuple[ConfiscationActor, str]]:
-        hits: list[tuple[ConfiscationActor, str]] = []
+    def match(
+        self, names: list[str]
+    ) -> list[tuple[ConfiscationActor, str, MatchOutcome]]:
+        hits: list[tuple[ConfiscationActor, str, MatchOutcome]] = []
         seen: set[str] = set()
         for supplied in names:
             if not supplied:
                 continue
-            forms = candidate_forms(supplied)
             for actor in self.actors:
                 if actor.actor_id in seen:
                     continue
-                if _matches(forms, actor.terms):
-                    hits.append((actor, supplied))
+                outcome = match_entry((supplied,), actor.terms, actor.person_forms)
+                if outcome is not None:
+                    hits.append((actor, supplied, outcome))
                     seen.add(actor.actor_id)
         return hits
 
@@ -490,6 +663,7 @@ def load_actor_list(path: str | Path = DEFAULT_ACTORS_PATH) -> ActorList:
                 name=name,
                 bases=tuple(bases),
                 terms=_build_terms(name, aliases),
+                person_forms=_person_forms(name, aliases),
                 verification_note=item.get("verification_note"),
                 aliases=aliases,
                 location=item.get("location"),

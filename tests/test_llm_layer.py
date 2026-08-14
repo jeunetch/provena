@@ -371,8 +371,12 @@ class PositionalCapitalTests(unittest.TestCase):
     def test_positional_words_are_data_not_code(self):
         # The list lives in the language pack so it can be extended without
         # touching the guard.
-        self.assertTrue(PACK.get("de").positional_capitals)
-        self.assertFalse(PACK.get("en").positional_capitals)
+        # Every language now carries one. English gained a list when the
+        # sentence-initial hole was closed for en/fr/it — before that, only
+        # German excluded positional capitals by identity, and the other
+        # languages skipped the first token of every sentence blindly.
+        for code in ("de", "en", "fr", "it"):
+            self.assertTrue(PACK.get(code).positional_capitals, code)
         import pathlib
 
         import src.llm_guard as guard_module
@@ -735,6 +739,76 @@ class DateFormatEquivalenceTests(unittest.TestCase):
             "Unverified: was fair value received in June 1934?",
             self.JUNE, stripped.get("en"), stripped,
         ).accepted)
+
+
+class SentenceInitialFabricationTests(unittest.TestCase):
+    """The reported hole: en/fr/it skipped the first token of every sentence.
+
+    The clause-initial correction was made for German on the third live run
+    and the module docstring described it as a property of the whole check.
+    It was not — it was a property of the German branch, and the other three
+    languages kept the blind skip, granting one free fabricated entity per
+    sentence. None of this would reliably surface in the live harness, which
+    needs the model to happen to open a sentence with a fabrication; six runs
+    of narrative validation did not find what these five lines do.
+    """
+
+    CTX = {
+        "rule_id": "PC-003",
+        "rule_statement": "Unverified: was fair value received?",
+        "methodology": "REAO Art. 3.",
+        "cited_fields": {
+            "owner_name": "Cordes, H.",
+            "date_from": "1938-11-04",
+            "location": "Vienna, Austria",
+        },
+    }
+
+    def check(self, text, language="en"):
+        return verify(text, self.CTX, PACK.get(language), PACK)
+
+    def test_a_sentence_may_not_begin_with_a_fabricated_name(self):
+        result = self.check("Morgenstern is named here; was fair value received?")
+        self.assertFalse(result.accepted)
+        self.assertIn("Morgenstern", result.reason)
+
+    def test_the_same_hole_is_closed_in_french_and_italian(self):
+        for language, text in (
+            ("fr", "Morgenstern est cité ici ; la valeur était-elle équitable ?"),
+            ("it", "Morgenstern è citato qui; il valore era equo?"),
+        ):
+            with self.subTest(language=language):
+                self.assertFalse(self.check(text, language).accepted)
+
+    def test_one_trailing_question_does_not_license_two_assertions(self):
+        result = self.check(
+            "Morgenstern acquired it. Rosenfeld sold it. Was fair value received?"
+        )
+        self.assertFalse(result.accepted)
+
+    def test_a_two_letter_name_is_no_longer_below_the_floor(self):
+        # MIN_PROPER_NOUN_LENGTH was 3, so "Ky" and "Ab" passed as parties.
+        result = self.check("The buyer was Ky and the seller Ab. Was value fair?")
+        self.assertFalse(result.accepted)
+
+    def test_ordinary_sentence_openers_are_still_accepted(self):
+        # The other direction, and the risk this fix carries: a legitimate
+        # sentence-initial word missing from positional_capitals rejects
+        # faithful output. These are the shapes the layer actually produces.
+        for language, text in (
+            ("en", "Unverified: was fair value received in Vienna, Austria?"),
+            ("en", "The record names Cordes, H. Was fair value received?"),
+            ("fr", "Non vérifié : une contrepartie a-t-elle été versée à Vienne ?"),
+            ("it", "Non verificato: cosa indica il documento? Cita Vienna come luogo."),
+        ):
+            with self.subTest(language=language):
+                result = self.check(text, language)
+                self.assertTrue(result.accepted, f"{text} -> {result.reason}")
+
+    def test_a_clause_may_still_begin_with_a_detected_name(self):
+        # The point of excluding by identity rather than by position.
+        result = self.check("Unverified: Morgenstern was involved; was value fair?")
+        self.assertFalse(result.accepted)
 
 
 class LanguagePackTests(unittest.TestCase):

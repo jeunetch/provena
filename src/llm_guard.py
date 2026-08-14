@@ -30,9 +30,12 @@ What is checked:
    grounding is impossible — the cited fields are English, so an ordinary
    German noun never matches them — and a RUN of adjacent capitalised tokens
    containing an ungrounded one is used instead, that being characteristically
-   a name rather than prose. Words capitalised only for position (clause-
-   initial verbs, interrogatives, articles) are excluded by identity rather
-   than by position, so a clause may still *begin* with a detected name.
+   a name rather than prose. In EVERY language, words capitalised only for
+   position (clause-initial verbs, interrogatives, articles) are excluded by
+   identity rather than by position, so a clause may still *begin* with a
+   detected name. This was true of German alone until 2026-08-14: the other
+   three skipped the first token of each sentence blindly, which granted one
+   free fabricated entity per sentence.
    Translating the input is not adding to it, so a token also grounds as a
    cross-language form of something in the fields — including the written-out
    name of a month the fields actually date.
@@ -49,6 +52,12 @@ narrative is caught by check 2 instead, which is its proper home. And none of
 this detects a fluent paraphrase that subtly changes the meaning of a field it
 was given. This is a mitigation, not a proof of faithfulness, and the layer
 stays optional and off by default for that reason.
+
+The en/fr/it `positional_capitals` lists are NEW and have not been through a
+live run. They carry the same risk German's did: a legitimate sentence-initial
+word missing from the list rejects faithful output. Two were found and added
+while writing the change ("Cita", "Quella"). Re-run the harness and read its
+frequency-ranked rejected-token list before trusting the baseline.
 """
 
 from __future__ import annotations
@@ -75,7 +84,10 @@ MAX_CHARACTERS = 700
 MAX_SENTENCES = 3
 
 # Below this length a capitalised token is too likely to be an ordinary word.
-MIN_PROPER_NOUN_LENGTH = 3
+# Two, not three: at three, "The buyer was Ky and the seller Ab" passed with two
+# invented parties. A two-letter capitalised token mid-sentence is rare enough
+# in ordinary prose that the trade is worth it.
+MIN_PROPER_NOUN_LENGTH = 2
 
 VIOLATION_NUMBER = "introduced_number"
 VIOLATION_HISTORY = "introduced_historical_context"
@@ -199,7 +211,11 @@ def load_language_pack(path: str | Path = DEFAULT_LANGUAGE_PATH) -> LanguagePack
             forbidden_assertions=tuple(
                 _fold(a) for a in entry.get("forbidden_assertions", ())
             ),
-            allowed_vocabulary=frozenset(entry.get("allowed_vocabulary", ())),
+            # Folded like every neighbouring comparison. Unfolded, this was
+            # the one set in the guard that was case- and diacritic-sensitive.
+            allowed_vocabulary=frozenset(
+                _fold(w) for w in entry.get("allowed_vocabulary", ())
+            ),
             restatement_vocabulary=frozenset(
                 _fold(w)
                 for w in (entry.get("restatement_vocabulary") or {}).get("words", ())
@@ -524,11 +540,18 @@ def verify(
         if language.capitalises_common_nouns:
             continue
         for index, token in enumerate(tokens):
-            if index == 0 or not token[:1].isupper():
+            if not token[:1].isupper():
+                continue
+            # The sentence-initial token is excluded by IDENTITY, not by
+            # position — the same correction already made for German, which
+            # had only ever been applied to German. Skipping index 0 blindly
+            # granted one free fabricated entity per sentence: "Morgenstern is
+            # named here; was fair value received?" passed the guard entirely.
+            if index == 0 and _fold(token) in language.positional_capitals:
                 continue
             if len(token) < MIN_PROPER_NOUN_LENGTH:
                 continue
-            if token in language.allowed_vocabulary:
+            if _fold(token) in language.allowed_vocabulary:
                 continue
             if _is_grounded(_fold(token), source_tokens, language, pack):
                 continue

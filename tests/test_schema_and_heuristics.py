@@ -1125,7 +1125,7 @@ class Rule12RealListTests(unittest.TestCase):
     def test_wolff_metternich_is_an_exonerating_entry(self):
         matches = self.aliu.match(["Wolff Metternich"])
         self.assertTrue(matches, "no Wolff Metternich entry in the bundled list")
-        entry, _ = matches[0]
+        entry, _, _ = matches[0]
         self.assertTrue(
             entry.is_exonerating,
             "The Wolff Metternich entry must be typed exonerating; rendering it "
